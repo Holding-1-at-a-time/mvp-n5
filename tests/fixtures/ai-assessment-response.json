@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "assessmentId": "assess_test_123",
+  "vinNumber": "1HGBH41JXMN109186",
+  "damages": [
+    {
+      "id": "damage_1_test",
+      "type": "dent",
+      "severity": "moderate",
+      "location": "front_bumper",
+      "description": "Medium-sized dent on front bumper",
+      "confidence": 0.85,
+      "imageUrl": "https://example.com/test-images/front-damage.jpg",
+      "boundingBox": {
+        "x": 100,
+        "y": 150,
+        "width": 80,
+        "height": 60
+      }
+    }
+  ],
+  "estimateItems": [
+    {
+      "id": "estimate_1_test",
+      "damageId": "damage_1_test",
+      "description": "Repair dent on front bumper",
+      "laborHours": 3,
+      "laborRate": 85,
+      "partsCost": 150,
+      "totalCost": 405,
+      "category": "body_work",
+      "priority": "medium"
+    }
+  ],
+  "totalEstimate": 405,
+  "processingTimeMs": 250,
+  "confidence": 0.85,
+  "metadata": {
+    "modelVersion": "granite3.2-vision:latest",
+    "processedAt": "2024-01-01T12:00:00.000Z",
+    "imageCount": 3
+  }
+}

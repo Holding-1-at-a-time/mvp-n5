@@ -4,35 +4,70 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, CreditCard, Check } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { ArrowLeft, Download, Mail, Phone, MapPin, Calendar, Clock, CreditCard } from "lucide-react"
 import Link from "next/link"
 
-export default function InvoicePage() {
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "processing" | "paid">("pending")
+interface InvoiceItem {
+  description: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
 
-  const handlePayment = () => {
-    setPaymentStatus("processing")
-    // Simulate payment processing
-    setTimeout(() => {
-      setPaymentStatus("paid")
-    }, 2000)
-  }
+const invoiceItems: InvoiceItem[] = [
+  {
+    description: "Front Bumper Scratch Repair",
+    quantity: 1,
+    unitPrice: 150.0,
+    total: 150.0,
+  },
+  {
+    description: "Door Dent Removal (PDR)",
+    quantity: 1,
+    unitPrice: 280.0,
+    total: 280.0,
+  },
+  {
+    description: "Paint Touch-up & Blend",
+    quantity: 1,
+    unitPrice: 450.0,
+    total: 450.0,
+  },
+]
+
+export default function InvoicePage() {
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
+
+  const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0)
+  const taxRate = 0.08
+  const tax = subtotal * taxRate
+  const total = subtotal + tax
 
   const invoiceData = {
-    invoiceNumber: "INV-12345",
-    date: new Date().toLocaleDateString(),
-    customerName: "John Doe",
-    customerEmail: "john.doe@example.com",
-    vin: "1HGCM82633A123456",
-    appointmentDate: "Tue 7/6 • 1:00 PM",
-    services: [
-      { description: "Scratch Buffing", quantity: 1, unitPrice: 50.0, total: 50.0 },
-      { description: "Leather Care Treatment", quantity: 1, unitPrice: 30.0, total: 30.0 },
-      { description: "Paint Touch-up", quantity: 1, unitPrice: 75.0, total: 75.0 },
-    ],
-    subtotal: 155.0,
-    tax: 12.4,
-    total: 167.4,
+    number: "INV-12345",
+    date: "January 7, 2025",
+    dueDate: "January 14, 2025",
+    customer: {
+      name: "John Doe",
+      email: "john.doe@email.com",
+      phone: "(555) 123-4567",
+      vin: "1HGCM82633A123456",
+    },
+    appointment: {
+      date: "Tuesday, January 7, 2025",
+      time: "1:00 PM",
+      duration: "2-3 hours",
+    },
+  }
+
+  const handlePayment = () => {
+    setPaymentProcessing(true)
+    // Simulate payment processing
+    setTimeout(() => {
+      setPaymentProcessing(false)
+      // In real app, redirect to payment success or dashboard
+    }, 3000)
   }
 
   return (
@@ -47,159 +82,267 @@ export default function InvoicePage() {
                 Back
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold">Invoice</h1>
+            <h1 className="text-xl font-semibold">Invoice & Payment</h1>
           </div>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+            <Button variant="outline" size="sm">
+              <Mail className="h-4 w-4 mr-2" />
+              Email Invoice
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
-        {/* Payment Status */}
-        {paymentStatus === "paid" && (
-          <Card className="mb-6 bg-green-50 border-green-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-green-900">Payment Successful!</h3>
-                  <p className="text-green-700 text-sm">Your appointment is confirmed</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Invoice */}
-        <Card className="mb-6">
-          <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-blue-600">Slick Solutions</h2>
-                <p className="text-gray-600">Professional Auto Care</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Invoice #{invoiceData.invoiceNumber}</p>
-                <p className="text-sm text-gray-600">Date: {invoiceData.date}</p>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="pt-6">
-            {/* Customer Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <h3 className="font-semibold mb-2">Bill To:</h3>
-                <p className="text-gray-700">{invoiceData.customerName}</p>
-                <p className="text-gray-600 text-sm">{invoiceData.customerEmail}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Vehicle Info:</h3>
-                <p className="text-gray-700">VIN: {invoiceData.vin}</p>
-                <p className="text-gray-600 text-sm">Appointment: {invoiceData.appointmentDate}</p>
-              </div>
-            </div>
-
-            {/* Services Table */}
-            <div className="mb-6">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Description</th>
-                    <th className="text-center py-2 w-16">Qty</th>
-                    <th className="text-right py-2 w-20">Unit $</th>
-                    <th className="text-right py-2 w-20">Total $</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoiceData.services.map((service, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="py-2">{service.description}</td>
-                      <td className="py-2 text-center">{service.quantity}</td>
-                      <td className="py-2 text-right">${service.unitPrice.toFixed(2)}</td>
-                      <td className="py-2 text-right">${service.total.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Totals */}
-            <div className="space-y-2 text-right border-t pt-4">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>${invoiceData.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax (8%):</span>
-                <span>${invoiceData.tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span>TOTAL:</span>
-                <span>${invoiceData.total.toFixed(2)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Payment Section */}
-        {paymentStatus !== "paid" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-gray-600" />
-                    <div>
-                      <p className="font-medium">Credit Card</p>
-                      <p className="text-sm text-gray-600">Secure payment via Stripe</p>
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Invoice */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardContent className="p-8">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-8">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">SS</span>
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold">Slick Solutions</h2>
+                        <p className="text-gray-600">Auto Care & Detailing</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>123 Auto Care Lane, City, ST 12345</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        <span>(555) 987-6543</span>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="secondary">Recommended</Badge>
+                  <div className="text-right">
+                    <h3 className="text-2xl font-bold text-gray-900">INVOICE</h3>
+                    <div className="mt-2 space-y-1 text-sm">
+                      <div>
+                        <span className="font-medium">Invoice #:</span> {invoiceData.number}
+                      </div>
+                      <div>
+                        <span className="font-medium">Date:</span> {invoiceData.date}
+                      </div>
+                      <div>
+                        <span className="font-medium">Due Date:</span> {invoiceData.dueDate}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <Button size="lg" className="w-full" onClick={handlePayment} disabled={paymentStatus === "processing"}>
-                  {paymentStatus === "processing" ? (
+                {/* Customer & Vehicle Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Bill To:</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="font-medium">{invoiceData.customer.name}</div>
+                      <div className="text-gray-600">{invoiceData.customer.email}</div>
+                      <div className="text-gray-600">{invoiceData.customer.phone}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Vehicle Info:</h4>
+                    <div className="space-y-1 text-sm">
+                      <div>
+                        <span className="font-medium">VIN:</span> {invoiceData.customer.vin}
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="h-4 w-4" />
+                        <span>{invoiceData.appointment.date}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {invoiceData.appointment.time} ({invoiceData.appointment.duration})
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Services Table */}
+                <div className="mb-8">
+                  <div className="bg-gray-50 px-4 py-3 rounded-t-lg">
+                    <div className="grid grid-cols-12 gap-4 font-medium text-sm text-gray-700">
+                      <div className="col-span-6">Description</div>
+                      <div className="col-span-2 text-center">Qty</div>
+                      <div className="col-span-2 text-right">Unit Price</div>
+                      <div className="col-span-2 text-right">Total</div>
+                    </div>
+                  </div>
+                  <div className="border border-t-0 rounded-b-lg">
+                    {invoiceItems.map((item, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-4 px-4 py-3 border-b last:border-b-0 text-sm">
+                        <div className="col-span-6">{item.description}</div>
+                        <div className="col-span-2 text-center">{item.quantity}</div>
+                        <div className="col-span-2 text-right">${item.unitPrice.toFixed(2)}</div>
+                        <div className="col-span-2 text-right font-medium">${item.total.toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Tax (8%):</span>
+                      <span>${tax.toFixed(2)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total:</span>
+                      <span>${total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Terms */}
+                <div className="mt-8 pt-6 border-t">
+                  <h4 className="font-semibold text-gray-900 mb-2">Payment Terms</h4>
+                  <p className="text-sm text-gray-600">
+                    Payment is due within 7 days of invoice date. Late payments may incur additional fees. All work is
+                    guaranteed for 90 days from completion date.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Payment Panel */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">${total.toFixed(2)}</div>
+                  <div className="text-sm text-gray-600">Total Amount Due</div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="text-sm font-medium">Payment Methods</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" className="justify-start bg-transparent">
+                      💳 Credit Card
+                    </Button>
+                    <Button variant="outline" size="sm" className="justify-start bg-transparent">
+                      🏦 Bank Transfer
+                    </Button>
+                    <Button variant="outline" size="sm" className="justify-start bg-transparent">
+                      📱 Digital Wallet
+                    </Button>
+                    <Button variant="outline" size="sm" className="justify-start bg-transparent">
+                      💰 Cash
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <Button className="w-full" size="lg" onClick={handlePayment} disabled={paymentProcessing}>
+                  {paymentProcessing ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Processing Payment...
+                      Processing...
                     </>
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" />
-                      Pay ${invoiceData.total.toFixed(2)}
+                      Pay Invoice
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-gray-500 text-center">Your payment is secured by 256-bit SSL encryption</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                <div className="text-xs text-gray-500 text-center">Secure payment powered by Stripe</div>
+              </CardContent>
+            </Card>
 
-        {/* Success Actions */}
-        {paymentStatus === "paid" && (
-          <div className="flex gap-4">
-            <Link href="/dashboard" className="flex-1">
-              <Button variant="outline" size="lg" className="w-full bg-transparent">
-                View Dashboard
-              </Button>
-            </Link>
-            <Link href="/" className="flex-1">
-              <Button size="lg" className="w-full">
-                New Inspection
-              </Button>
-            </Link>
+            {/* Appointment Confirmation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Appointment Confirmed</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-green-600" />
+                  <div>
+                    <div className="font-medium">{invoiceData.appointment.date}</div>
+                    <div className="text-sm text-gray-600">{invoiceData.appointment.time}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-green-600" />
+                  <div>
+                    <div className="font-medium">Duration</div>
+                    <div className="text-sm text-gray-600">{invoiceData.appointment.duration}</div>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-800 w-full justify-center">
+                  ✓ Appointment Scheduled
+                </Badge>
+              </CardContent>
+            </Card>
+
+            {/* Next Steps */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Next Steps</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">
+                    1
+                  </div>
+                  <div>
+                    <div className="font-medium">Complete Payment</div>
+                    <div className="text-gray-600">Secure your appointment slot</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">
+                    2
+                  </div>
+                  <div>
+                    <div className="font-medium">Receive Confirmation</div>
+                    <div className="text-gray-600">Email and SMS reminders</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">
+                    3
+                  </div>
+                  <div>
+                    <div className="font-medium">Visit Our Shop</div>
+                    <div className="text-gray-600">Bring your vehicle on time</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
