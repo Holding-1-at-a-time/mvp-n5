@@ -337,7 +337,7 @@ export default function MediaUploadPage() {
             {Array.from({ length: 6 }).map((_, index) => {
               const photo = capturedPhotos[index]
               return (
-                <div key={index} className="flex-shrink-0 relative">
+                <div key={index} className="shrink-0 relative">
                   {photo ? (
                     <div className="relative group">
                       <img

@@ -201,7 +201,7 @@ export default function NewInspectionPage() {
           {capturedImages.length > 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {capturedImages.map((image) => (
-                <div key={image.id} className="relative flex-shrink-0">
+                <div key={image.id} className="relative shrink-0">
                   <img
                     src={image.url || "/placeholder.svg"}
                     alt="Captured"
