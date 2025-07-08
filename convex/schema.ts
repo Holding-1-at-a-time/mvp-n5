@@ -1,6 +1,56 @@
-import { defineSchema, defineTable } from "convex/server"
-import { v } from "convex/values"
+// convex/schema.ts
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
 
+export default defineSchema({
+  //──────────────────────────────────────────────────────────────────────────────
+  // A. Tenancy & Users
+  //──────────────────────────────────────────────────────────────────────────────
+  shops: defineTable({
+    name: v.string(),
+    contactEmail: v.string(),
+    createdAt: v.number(),
+  }),
+
+  users: defineTable({
+    shopId: v.id("shops"),
+    name: v.string(),
+    email: v.string(),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("manager"),
+      v.literal("technician"),
+      v.literal("viewer")
+    ),
+    createdAt: v.number(),
+  }),
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // B. Shop Configuration & Pricing Defaults
+  //──────────────────────────────────────────────────────────────────────────────
+  shopSettings: defineTable({
+    shopId: v.id("shops"),
+    laborRate: v.number(),
+    skillMarkup: v.number(),        // e.g. 0.2 = +20%
+    locationSurcharge: v.number(),  // e.g. 0.1 = +10%
+    membershipDiscounts: v.record(v.string(), v.number()),
+    workloadThreshold: v.number(),  // 0.8 = 80% capacity surge
+    filthinessFactors: v.record(v.string(), v.number()),
+    damageMultiplier: v.number(),
+    areaUnitPrice: v.number(),
+  }),
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // C. Vehicles & Inspections
+  //──────────────────────────────────────────────────────────────────────────────
+  vehicles: defineTable({
+    shopId: v.id("shops"),
+    vin: v.string(),
+    make: v.string(),
+    model: v.string(),
+    year: v.number(),
+    createdAt: v.number(),
+  }),
 export default defineSchema({
   inspections: defineTable({
     vinNumber: v.string(),
@@ -39,8 +89,10 @@ export default defineSchema({
     inspectionId: v.id("inspections"),
     damageId: v.id("damages"),
     description: v.string(),
+    service: v.string(),
     laborHours: v.number(),
     laborRate: v.number(),
+    servceBasePrice: v.number(),
     partsCost: v.number(),
     totalCost: v.number(),
     category: v.string(),
@@ -54,3 +106,106 @@ export default defineSchema({
     uploadedAt: v.number(),
   }),
 })
+
+// convex/schema.ts
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  //──────────────────────────────────────────────────────────────────────────────
+  // A. Tenancy & Users
+  //──────────────────────────────────────────────────────────────────────────────
+  shops: defineTable({
+    name: v.string(),
+    contactEmail: v.string(),
+    createdAt: v.number(),
+  }),
+
+  users: defineTable({
+    shopId: v.id("shops"),
+    name: v.string(),
+    email: v.string(),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("manager"),
+      v.literal("technician"),
+      v.literal("viewer")
+    ),
+    createdAt: v.number(),
+  }),
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // B. Shop Configuration & Pricing Defaults
+  //──────────────────────────────────────────────────────────────────────────────
+  shopSettings: defineTable({
+    shopId: v.id("shops"),
+    laborRate: v.number(),
+    skillMarkup: v.number(),        // e.g. 0.2 = +20%
+    locationSurcharge: v.number(),  // e.g. 0.1 = +10%
+    membershipDiscounts: v.record(v.string(), v.number()),
+    workloadThreshold: v.number(),  // 0.8 = 80% capacity surge
+    filthinessFactors: v.record(v.string(), v.number()),
+    damageMultiplier: v.number(),
+    areaUnitPrice: v.number(),
+  }),
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // C. Vehicles & Inspections
+  //──────────────────────────────────────────────────────────────────────────────
+  vehicles: defineTable({
+    shopId: v.id("shops"),
+    vin: v.string(),
+    make: v.string(),
+    model: v.string(),
+    year: v.number(),
+    createdAt: v.number(),
+  }),
+
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // H. Semantic Knowledge Base (RAG)
+  //──────────────────────────────────────────────────────────────────────────────
+  knowledgeBase: defineTable({
+    shopId: v.id("shops"),
+    namespace: v.string(),
+    chunkId: v.string(),
+    content: v.string(),
+    metadata: v.optional(v.record(v.string(), v.string())),
+    createdAt: v.number(),
+    embeddingId: v.optional(v.id("embeddingVectors")),
+  }).index("by_embedding", ["embeddingId"]),
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // I. Embeddings & Vector Index (Advanced Pattern)
+  //──────────────────────────────────────────────────────────────────────────────
+  embeddingVectors: defineTable({
+    shopId: v.id("shops"),
+    referenceType: v.union(
+      v.literal("inspection"),
+      v.literal("damage"),
+      v.literal("knowledgeBase")
+    ),
+    referenceId: v.string(),
+    vector: v.array(v.float64()),
+    metadata: v.optional(v.record(v.string(), v.string())),
+    createdAt: v.number(),
+  })
+  .vectorIndex("by_vector", {
+    vectorField: "vector",
+    dimensions: 1024,
+    filterFields: ["shopId", "referenceType"],
+  }),
+
+  //──────────────────────────────────────────────────────────────────────────────
+  // J. Audit Logging
+  //──────────────────────────────────────────────────────────────────────────────
+  auditLogs: defineTable({
+    shopId: v.optional(v.id("shops")),
+    tableName: v.string(),
+    recordId: v.string(),
+    operation: v.union(v.literal("INSERT"), v.literal("UPDATE"), v.literal("DELETE")),
+    changedFields: v.optional(v.record(v.string(), v.string())),
+    timestamp: v.number(),
+    userId: v.optional(v.id("users")),
+  }),
+});
