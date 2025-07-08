@@ -1,0 +1,12 @@
+{
+  "imageUrls": [
+    "https://example.com/test-images/front-damage.jpg",
+    "https://example.com/test-images/side-scratch.jpg",
+    "https://example.com/test-images/rear-dent.jpg"
+  ],
+  "vinNumber": "1HGBH41JXMN109186",
+  "metadata": {
+    "inspectionId": "test_inspection_ci_123",
+    "timestamp": 1704067200000
+  }
+}
