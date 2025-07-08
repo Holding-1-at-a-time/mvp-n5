@@ -29,5 +29,34 @@ declare const fullApi: ApiFromModules<{
 export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>
 export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>
 
-// Added by v0 to satisfy missing export error
+// ---------- Runtime stubs (added by v0) ----------
+/**
+ * During local development `convex dev` generates a fully-featured
+ * implementation.  In preview/CI we expose no-op proxies so that
+ * the app can bundle without Convex running.
+ */
+function makeNoopProxy(name: string) {
+  return new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(
+          `${name} proxy is a stub in this build. Run "npx convex dev" or deploy with Convex enabled to use server functions.`,
+        )
+      },
+    },
+  )
+}
+
+// Runtime (value) exports
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+const apiRuntime = makeNoopProxy("api")
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+const internalRuntime = makeNoopProxy("internal")
+
+// Optional: keep empty components object to satisfy any stray import
 export const components = {}
+
+export const api = apiRuntime
+export const internal = internalRuntime
+// -------------------------------------------------
