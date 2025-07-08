@@ -43,6 +43,44 @@ export async function trackMetric(name: string, value: number, tags?: Record<str
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Error-tracking helper                                              */
+/* ------------------------------------------------------------------ */
+
+export async function trackError(error: unknown, tags?: Record<string, any>) {
+  try {
+    // Send to Sentry
+    Sentry.captureException(error, {
+      extra: tags,
+    })
+
+    // Optional Slack alert
+    if (process.env.SLACK_WEBHOOK_URL) {
+      await fetch(process.env.SLACK_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `🚨 Unhandled error: ${error instanceof Error ? error.message : String(error)}`,
+          attachments: [
+            {
+              color: "danger",
+              fields: Object.entries(tags ?? {}).map(([k, v]) => ({
+                title: k,
+                value: String(v),
+                short: true,
+              })),
+              footer: "Slick Solutions Vehicle Inspection",
+              ts: Math.floor(Date.now() / 1000),
+            },
+          ],
+        }),
+      })
+    }
+  } catch (err) {
+    console.error("Failed to send trackError payload:", err)
+  }
+}
+
 // Store recent metrics for failure rate calculation
 const recentMetrics = new Map<string, Array<{ timestamp: number; success: boolean }>>()
 

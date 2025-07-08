@@ -1,3 +1,82 @@
+/* ------------------------------------------------------------------ */
+/* Generic metric alert helpers                                       */
+/* ------------------------------------------------------------------ */
+
+export async function checkEmbeddingLatency(latency: number, context?: Record<string, any>) {
+  const threshold = 3_000 // 3 s
+  if (latency > threshold) {
+    await sendSlackAlert({
+      text: `🚨 Embedding latency ${latency} ms (>${threshold} ms)`,
+      color: "danger",
+      fields: [
+        { title: "Latency", value: `${latency} ms`, short: true },
+        { title: "Threshold", value: `${threshold} ms`, short: true },
+        { title: "Model", value: context?.model ?? "unknown", short: true },
+      ],
+    })
+  }
+}
+
+export async function checkWorkflowFailureRate(failureRate: number, context?: Record<string, any>) {
+  const threshold = 0.2 // 20 %
+  if (failureRate > threshold) {
+    await sendSlackAlert({
+      text: `🚨 Workflow failure-rate ${(failureRate * 100).toFixed(1)} % (>20 %)`,
+      color: "danger",
+      fields: [
+        { title: "Failure-rate", value: `${(failureRate * 100).toFixed(1)} %`, short: true },
+        { title: "Window", value: context?.timeWindow ?? "unknown", short: true },
+        { title: "Failures", value: context?.failures?.toString() ?? "?", short: true },
+        { title: "Total", value: context?.totalRequests?.toString() ?? "?", short: true },
+      ],
+    })
+  }
+}
+
+export async function checkApiResponseTime(duration: number, context?: Record<string, any>) {
+  const threshold = 1_500 // 1.5 s
+  if (duration > threshold) {
+    await sendSlackAlert({
+      text: `⚠️ Slow API response ${duration} ms (>${threshold} ms)`,
+      color: "warning",
+      fields: [
+        { title: "Duration", value: `${duration} ms`, short: true },
+        { title: "Endpoint", value: context?.endpoint ?? "unknown", short: false },
+      ],
+    })
+  }
+}
+
+export async function checkAssessmentConfidence(confidence: number, context?: Record<string, any>) {
+  const threshold = 0.7
+  if (confidence < threshold) {
+    await sendSlackAlert({
+      text: `⚠️ Low assessment confidence ${(confidence * 100).toFixed(1)} %`,
+      color: "warning",
+      fields: [
+        { title: "Confidence", value: `${(confidence * 100).toFixed(1)} %`, short: true },
+        { title: "Threshold", value: `${(threshold * 100).toFixed(0)} %`, short: true },
+      ],
+    })
+  }
+}
+
+export async function checkUploadFailureRate(failureRate: number, context?: Record<string, any>) {
+  const threshold = 0.1 // 10 %
+  if (failureRate > threshold) {
+    await sendSlackAlert({
+      text: `🚨 Upload failure-rate ${(failureRate * 100).toFixed(1)} % (>10 %)`,
+      color: "danger",
+      fields: [
+        { title: "Failure-rate", value: `${(failureRate * 100).toFixed(1)} %`, short: true },
+        { title: "Window", value: context?.timeWindow ?? "unknown", short: true },
+        { title: "Failures", value: context?.failures?.toString() ?? "?", short: true },
+        { title: "Total", value: context?.totalRequests?.toString() ?? "?", short: true },
+      ],
+    })
+  }
+}
+
 // Add these new alert functions to the existing file
 
 export async function checkOllamaLatency(latency: number, context?: Record<string, any>) {
