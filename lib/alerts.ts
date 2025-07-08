@@ -51,3 +51,56 @@ export async function sendSlackAlert(alertData: {
     }),
   })
 }
+
+/* ------------------------------------------------------------------ */
+/* Ollama-specific alert helpers                                      */
+/* ------------------------------------------------------------------ */
+
+export async function checkOllamaLatency(
+  latencyMs: number,
+  context: Record<string, any> = {},
+  thresholdMs = 2_000, // 2 s
+) {
+  if (latencyMs <= thresholdMs) return
+  await sendSlackAlert({
+    text: `🚨 Ollama latency ${latencyMs} ms (>${thresholdMs} ms)`,
+    color: "danger",
+    fields: [
+      { title: "Latency", value: `${latencyMs} ms`, short: true },
+      { title: "Threshold", value: `${thresholdMs} ms`, short: true },
+      { title: "Model", value: context.model ?? "unknown", short: true },
+      { title: "Operation", value: context.operation ?? "unknown", short: true },
+    ],
+  })
+}
+
+export async function checkOllamaHealth(healthy: boolean, context: Record<string, any> = {}) {
+  if (healthy) return
+  await sendSlackAlert({
+    text: "🚨 Ollama health check failed",
+    color: "danger",
+    fields: [
+      { title: "Service", value: "Ollama", short: true },
+      { title: "URL", value: context.url ?? "unknown", short: false },
+      { title: "Error", value: context.error ?? "Connection failed", short: false },
+    ],
+  })
+}
+
+export async function checkVisionModelAccuracy(
+  confidence: number,
+  context: Record<string, any> = {},
+  minConfidence = 0.6, // 60 %
+) {
+  if (confidence >= minConfidence) return
+  await sendSlackAlert({
+    text: `⚠️ Low vision-model confidence ${(confidence * 100).toFixed(1)} %`,
+    color: "warning",
+    fields: [
+      { title: "Confidence", value: `${(confidence * 100).toFixed(1)} %`, short: true },
+      { title: "Threshold", value: `${(minConfidence * 100).toFixed(0)} %`, short: true },
+      { title: "Images", value: context.imageCount?.toString() ?? "0", short: true },
+      { title: "Damages", value: context.damageCount?.toString() ?? "0", short: true },
+    ],
+  })
+}

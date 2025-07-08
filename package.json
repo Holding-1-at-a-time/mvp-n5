@@ -60,28 +60,28 @@
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
     "input-otp": "latest",
-    "lucide-react": "^0.525.0",
-    "next": "15.3.5",
+    "lucide-react": "^0.454.0",
+    "next": "15.2.4",
     "next-themes": "latest",
     "node-fetch": "latest",
-    "react": "^19.1.0",
+    "react": "^19",
     "react-day-picker": "latest",
-    "react-dom": "^19.1.0",
+    "react-dom": "^19",
     "react-hook-form": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",
     "sonner": "latest",
-    "tailwind-merge": "^3.3.1",
+    "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",
     "zod": "latest"
   },
   "devDependencies": {
-    "@types/node": "^24.0.11",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "postcss": "^8.5.6",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "postcss": "^8.5",
     "tailwindcss": "^4.1.11",
-    "typescript": "^5.8.3"
+    "typescript": "^5"
   }
 }
