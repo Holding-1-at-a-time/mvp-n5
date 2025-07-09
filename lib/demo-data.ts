@@ -1,28 +1,38 @@
-export interface Shop {
+// Lightweight mock data so the app can render in environments
+// where the Convex runtime is unavailable (e.g. v0 preview).
+
+export type Shop = {
   _id: string
   name: string
-  address: string
-  status: "active" | "suspended" | "trial"
-  userRole: "Owner" | "Manager" | "Technician"
-  subscription: { plan: "Starter" | "Pro" | "Enterprise"; expiresAt: number }
-  settings: { features: string[] }
+  userRole: "Owner" | "Manager" | "Tech"
+  subscription: {
+    status: "active" | "inactive"
+    plan: "Starter" | "Pro" | "Enterprise"
+  }
 }
 
-/**
- * Fallback demo data used when Convex isn't running (e.g. in v0 preview).
- * Replace with real `useQuery(api.shops.list)` once `npx convex dev` is active.
- */
-export const demoShops: Shop[] = [
+export const shops: Shop[] = [
   {
-    _id: "demo-shop-1",
-    name: "Demo Auto Body",
-    address: "123 Main St, Springfield, USA",
-    status: "active",
+    _id: "shop_demo_1",
+    name: "Downtown Auto Care",
     userRole: "Owner",
-    subscription: {
-      plan: "Pro",
-      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 30, // 30-day demo
-    },
-    settings: { features: ["inspection", "ai", "pricing", "scheduling"] },
+    subscription: { status: "active", plan: "Pro" },
+  },
+  {
+    _id: "shop_demo_2",
+    name: "Uptown Detailers",
+    userRole: "Manager",
+    subscription: { status: "inactive", plan: "Starter" },
   },
 ]
+
+export const dashboards = {
+  inspections: {
+    total: 128,
+    completed: 94,
+    inProgress: 21,
+  },
+  customers: 56,
+  vehicles: 77,
+  users: 14,
+}
