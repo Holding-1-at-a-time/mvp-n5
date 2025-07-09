@@ -10,6 +10,10 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+  .focus-ring {
+    /* Consistent teal focus outline */
+    @apply focus:ring-2 focus:ring-[#00ae98] focus:ring-offset-2 focus:ring-offset-slate-900;
+  }
 }
 
 @layer base {
