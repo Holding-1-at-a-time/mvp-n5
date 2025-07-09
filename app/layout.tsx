@@ -9,9 +9,9 @@ import { ConvexClientProvider } from "./providers"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Vehicle Inspection System",
-  description: "AI-powered vehicle damage assessment and repair estimation",
-    generator: 'v0.dev'
+  title: "Slick Solutions - AI-Powered Vehicle Inspection",
+  description: "Professional vehicle damage assessment and repair estimation powered by artificial intelligence",
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -23,9 +23,21 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ConvexClientProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            {children}
-            <Toaster />
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">{children}</div>
+            <Toaster
+              theme="dark"
+              className="toaster group"
+              toastOptions={{
+                classNames: {
+                  toast:
+                    "group toast group-[.toaster]:bg-slate-800 group-[.toaster]:text-slate-50 group-[.toaster]:border-slate-600 group-[.toaster]:shadow-lg",
+                  description: "group-[.toast]:text-slate-400",
+                  actionButton: "group-[.toast]:bg-[#00ae98] group-[.toast]:text-slate-50",
+                  cancelButton: "group-[.toast]:bg-slate-600 group-[.toast]:text-slate-50",
+                },
+              }}
+            />
           </ThemeProvider>
         </ConvexClientProvider>
       </body>
