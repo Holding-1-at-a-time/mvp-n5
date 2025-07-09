@@ -1,49 +1,48 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Clock, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { CheckCircle, Sparkles, PauseCircle } from "lucide-react"
 
-type Status = "active" | "inactive" | "completed" | "inProgress" | "pending" | "error"
-
-interface StatusBadgeProps {
-  status: Status
+type Props = {
+  status: "active" | "suspended" | "trial" | "ai-powered"
   className?: string
-  type?: "inspection" | "subscription"
 }
 
-export function StatusBadge({ status, className, type = "subscription" }: StatusBadgeProps) {
-  let colorClasses = ""
-  let icon = null
+/**
+ * Re-usable status badge component.
+ */
+export function StatusBadge({ status, className }: Props) {
+  const base = "flex items-center gap-1 border px-2 py-0.5 rounded-md text-xs font-medium select-none"
 
-  switch (status) {
-    case "active":
-    case "completed":
-      colorClasses = "bg-green-500/20 text-green-400 border border-green-500/30"
-      icon = <CheckCircle className="h-3 w-3 mr-1" />
-      break
-    case "inProgress":
-    case "pending":
-      colorClasses = "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-      icon = <Clock className="h-3 w-3 mr-1" />
-      break
-    default:
-      colorClasses = "bg-red-500/20 text-red-400 border border-red-500/30"
-      icon = <XCircle className="h-3 w-3 mr-1" />
-  }
+  const map = {
+    active: {
+      color: "bg-green-500/20 text-green-400 border-green-500/30",
+      icon: CheckCircle,
+      label: "Active",
+    },
+    suspended: {
+      color: "bg-red-500/20 text-red-400 border-red-500/30",
+      icon: PauseCircle,
+      label: "Suspended",
+    },
+    trial: {
+      color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+      icon: Sparkles,
+      label: "Trial",
+    },
+    "ai-powered": {
+      color: "bg-[#00ae98]/20 text-[#00ae98] border-[#00ae98]/30",
+      icon: Sparkles,
+      label: "AI-Powered",
+    },
+  } as const
 
-  const label =
-    type === "inspection"
-      ? status === "completed"
-        ? "Completed"
-        : status === "inProgress"
-          ? "In Progress"
-          : "Pending"
-      : status === "active"
-        ? "Active"
-        : "Inactive"
+  const { color, icon: Icon, label } = map[status]
 
   return (
-    <Badge className={cn(colorClasses, "flex items-center", className)}>
-      {icon}
+    <Badge className={cn(base, color, className)}>
+      <Icon className="h-3 w-3" />
       {label}
     </Badge>
   )

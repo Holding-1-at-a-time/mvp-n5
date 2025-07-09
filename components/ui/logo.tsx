@@ -1,27 +1,34 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 
-interface LogoProps {
+type LogoProps = {
+  size?: "sm" | "md" | "lg"
   className?: string
-  size?: "sm" | "lg"
 }
 
-export function Logo({ className, size = "lg" }: LogoProps) {
-  const boxSize = size === "sm" ? "h-8 w-8" : "h-12 w-12"
-  const textSize = size === "sm" ? "text-lg" : "text-xl"
+/**
+ * Branded “Slick Solutions” logo.
+ * Usage: <Logo /> or <Logo size="sm" />
+ */
+export function Logo({ size = "md", className }: LogoProps) {
+  const dimension = size === "sm" ? "h-8 w-8" : size === "lg" ? "h-16 w-16" : "h-12 w-12"
+  const titleSize = size === "sm" ? "text-lg" : size === "lg" ? "text-2xl" : "text-xl"
+  const subtitleSize = size === "sm" ? "text-xs" : size === "lg" ? "text-base" : "text-sm"
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <div
         className={cn(
-          boxSize,
+          dimension,
           "bg-gradient-to-br from-[#00ae98] to-[#00ae98]/80 rounded-xl flex items-center justify-center",
         )}
       >
         <span className="text-white font-bold">SS</span>
       </div>
-      <div className="hidden sm:block">
-        <h1 className={cn(textSize, "font-bold text-white")}>Slick Solutions</h1>
-        <p className="text-sm text-slate-400">AI-Powered Detailing</p>
+      <div className="leading-none">
+        <h1 className={cn(titleSize, "font-bold text-white")}>Slick Solutions</h1>
+        <p className={cn(subtitleSize, "text-slate-400")}>AI-Powered Detailing</p>
       </div>
     </div>
   )
