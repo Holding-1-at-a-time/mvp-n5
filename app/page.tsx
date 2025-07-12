@@ -9,7 +9,7 @@ import { Car, ClipboardCheck, Users, Building2, Sparkles, ArrowRight, Shield, Za
 import Link from "next/link"
 
 // ---- DEMO DATA (avoids Convex proxy error) ----
-import { demoShops, type Shop } from "@/lib/demo-data"
+import { demoShops, type DemoShop as Shop } from "@/lib/demo-data"
 // -----------------------------------------------
 
 // If you have Convex running, replace the line above with:
@@ -174,7 +174,7 @@ export default function HomePage() {
                   <div className="flex flex-col gap-2">
                     <StatusBadge status={currentShop.status} />
                     <Badge className="bg-[#00ae98]/20 text-[#00ae98] border border-[#00ae98]/30">
-                      {currentShop.subscription.plan}
+                      {currentShop?.subscription?.plan ?? "Unknown"}
                     </Badge>
                   </div>
                 </div>
@@ -182,7 +182,9 @@ export default function HomePage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-white mb-1">{currentShop.settings.features.length}</div>
+                    <div className="text-2xl font-bold text-white mb-1">
+                      {currentShop?.settings?.features?.length ?? 0}
+                    </div>
                     <div className="text-slate-400">Active Features</div>
                   </div>
                   <div className="text-center">
@@ -191,7 +193,9 @@ export default function HomePage() {
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-white mb-1">
-                      {new Date(currentShop.subscription.expiresAt).toLocaleDateString()}
+                      {currentShop?.subscription?.expiresAt
+                        ? new Date(currentShop.subscription.expiresAt).toLocaleDateString()
+                        : "—"}
                     </div>
                     <div className="text-slate-400">Expires</div>
                   </div>
