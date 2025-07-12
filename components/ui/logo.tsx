@@ -1,38 +1,30 @@
+"use client"
+
+import type React from "react"
+
 import { cn } from "@/lib/utils"
 
-interface LogoProps {
-  className?: string
-  showText?: boolean
+export interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "md" | "lg"
 }
 
-export function Logo({ className, showText = true, size = "md" }: LogoProps) {
-  const sizeClasses = {
-    sm: "w-8 h-8 text-sm",
-    md: "w-12 h-12 text-lg",
-    lg: "w-16 h-16 text-xl",
-  }
-
-  const textSizeClasses = {
-    sm: "text-lg",
-    md: "text-xl",
-    lg: "text-2xl",
-  }
+export function Logo({ size = "md", className, ...props }: LogoProps) {
+  const dim = size === "sm" ? "w-9 h-9" : size === "lg" ? "w-16 h-16" : "w-12 h-12"
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
+    <div className={cn("flex items-center gap-3", className)} {...props}>
       <div
         className={cn(
-          "bg-gradient-to-br from-[#00ae98] to-[#00ae98]/80 rounded-xl flex items-center justify-center shadow-lg shadow-[#00ae98]/25",
-          sizeClasses[size],
+          dim,
+          "bg-gradient-to-br from-[#00ae98] to-[#00ae98]/80 rounded-xl flex items-center justify-center",
         )}
       >
-        <span className="text-white font-bold">SS</span>
+        <span className="text-white font-bold text-sm md:text-lg">SS</span>
       </div>
-      {showText && (
+      {size !== "sm" && (
         <div>
-          <h1 className={cn("font-bold text-white", textSizeClasses[size])}>Slick Solutions</h1>
-          <p className="text-sm text-slate-400">AI-Powered Detailing</p>
+          <h1 className="font-bold text-white text-lg md:text-xl">Slick Solutions</h1>
+          <p className="text-xs text-slate-400 hidden md:block">AI-Powered Detailing</p>
         </div>
       )}
     </div>

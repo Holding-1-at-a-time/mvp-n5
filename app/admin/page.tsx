@@ -87,7 +87,7 @@ export default function AdminDashboard() {
                 </option>
               ))}
             </select>
-            <StatusBadge status={currentShop.subscription.status} type="subscription" />
+            <StatusBadge status={currentShop.subscription?.status} type="subscription" />
           </div>
         </div>
       </header>

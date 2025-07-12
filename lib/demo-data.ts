@@ -1,6 +1,3 @@
-// Demo data for development and preview environments
-// Switch to live Convex queries when running `npx convex dev`
-
 export interface DemoShop {
   _id: string
   name: string
@@ -70,6 +67,15 @@ export interface DemoUser {
   email: string
   role: "admin" | "manager" | "technician" | "viewer"
   createdAt: number
+}
+
+export type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled"
+
+export interface Shop {
+  _id: string
+  name: string
+  userRole: "Owner" | "Admin" | "Tech"
+  subscription: { plan: "starter" | "pro" | "enterprise"; status: SubscriptionStatus }
 }
 
 // Demo shops data
@@ -299,19 +305,13 @@ export const demoUsers: DemoUser[] = [
 // Aggregated dashboard metrics
 // -----------------------------------------------------------------
 export const dashboards = {
-  inspections: {
-    total: demoInspections.length,
-    completed: demoInspections.filter((i) => i.status === "complete").length,
-    inProgress: demoInspections.filter((i) => i.status === "processing").length,
-  },
-  customers: 56,
-  vehicles: 77,
-  users: demoUsers.length,
+  inspections: { total: 128, completed: 102, inProgress: 26 },
+  customers: 54,
+  vehicles: 87,
+  users: 11,
 }
 
 // Aggregate demo data for dashboard
-export const shops = demoShops
-export const recentInspections = demoInspections.slice(0, 5)
 export const totalStats = {
   totalShops: demoShops.length,
   totalInspections: demoShops.reduce((sum, shop) => sum + (shop.stats?.totalInspections || 0), 0),
