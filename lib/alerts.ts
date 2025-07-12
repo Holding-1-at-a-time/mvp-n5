@@ -24,6 +24,46 @@ export function checkUploadFailureRate(failures: number, total: number, maxFailu
   return failures / total > maxFailurePct
 }
 
+/**
+ * ------------------------------------------------------------------
+ * Ollama-specific helpers
+ * ------------------------------------------------------------------
+ */
+
+/**
+ * Flag latency when Ollama's `/generate` or `/embeddings` endpoints
+ * take longer than `thresholdMs`.
+ */
+export function checkOllamaLatency(latencyMs: number, thresholdMs = 3_000): boolean {
+  return latencyMs > thresholdMs
+}
+
+/**
+ * Simple health-check that pings `GET /` on the Ollama server.
+ * Returns `true` when HTTP 200 <= status < 300.
+ */
+export async function checkOllamaHealth(
+  /**
+   * Base URL for your Ollama instance (defaults to env var or localhost).
+   */
+  baseUrl: string = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434",
+): Promise<boolean> {
+  try {
+    const res = await fetch(baseUrl, { method: "GET" })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Trigger an alert when the rolling accuracy of your vision model
+ * falls below the specified `minAccuracy` (e.g. 0.9 == 90 %).
+ */
+export function checkVisionModelAccuracy(accuracy: number, minAccuracy = 0.9): boolean {
+  return accuracy < minAccuracy
+}
+
 export async function sendSlackAlert(alertData: {
   text: string
   color: string

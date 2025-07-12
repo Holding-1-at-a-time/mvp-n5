@@ -295,6 +295,20 @@ export const demoUsers: DemoUser[] = [
   },
 ]
 
+// -----------------------------------------------------------------
+// Aggregated dashboard metrics
+// -----------------------------------------------------------------
+export const dashboards = {
+  inspections: {
+    total: demoInspections.length,
+    completed: demoInspections.filter((i) => i.status === "complete").length,
+    inProgress: demoInspections.filter((i) => i.status === "processing").length,
+  },
+  customers: 56,
+  vehicles: 77,
+  users: demoUsers.length,
+}
+
 // Aggregate demo data for dashboard
 export const shops = demoShops
 export const recentInspections = demoInspections.slice(0, 5)
