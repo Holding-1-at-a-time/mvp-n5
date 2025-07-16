@@ -175,6 +175,9 @@ export const demoShops: DemoShop[] = [
   },
 ]
 
+// Alias so pages can import { shops } without breaking when Convex isn’t running
+export const shops: DemoShop[] = demoShops
+
 // Demo inspections data
 export const demoInspections: DemoInspection[] = [
   {
