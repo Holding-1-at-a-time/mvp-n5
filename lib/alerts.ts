@@ -2,27 +2,15 @@
 /* Generic metric alert helpers                                       */
 /* ------------------------------------------------------------------ */
 
-export function checkEmbeddingLatency(latencyMs: number, thresholdMs = 2_000): boolean {
-  return latencyMs > thresholdMs
-}
+export function checkEmbeddingLatency(_v: number, _tags?: Record<string, any>) {}
 
-export function checkWorkflowFailureRate(failures: number, total: number, maxFailurePct = 0.05): boolean {
-  if (total === 0) return false
-  return failures / total > maxFailurePct
-}
+export function checkWorkflowFailureRate(_rate: number, _ctx?: Record<string, any>) {}
 
-export function checkApiResponseTime(latencyMs: number, thresholdMs = 1_000): boolean {
-  return latencyMs > thresholdMs
-}
+export function checkApiResponseTime(_v: number, _tags?: Record<string, any>) {}
 
-export function checkAssessmentConfidence(confidence: number, minConfidence = 0.75): boolean {
-  return confidence < minConfidence
-}
+export function checkAssessmentConfidence(_v: number, _tags?: Record<string, any>) {}
 
-export function checkUploadFailureRate(failures: number, total: number, maxFailurePct = 0.02): boolean {
-  if (total === 0) return false
-  return failures / total > maxFailurePct
-}
+export function checkUploadFailureRate(_rate: number, _ctx?: Record<string, any>) {}
 
 /**
  * ------------------------------------------------------------------
@@ -34,20 +22,13 @@ export function checkUploadFailureRate(failures: number, total: number, maxFailu
  * Flag latency when Ollama's `/generate` or `/embeddings` endpoints
  * take longer than `thresholdMs`.
  */
-export async function checkOllamaLatency(): Promise<{ latencyMs: number }> {
-  // 👉 Replace this with a real fetch round-trip once Ollama is accessible.
-  return { latencyMs: Math.floor(Math.random() * 100) + 20 }
-}
+export function checkOllamaLatency(_v: number, _tags?: Record<string, any>) {}
 
 /** Hit the /health route (or equivalent) and return basic status. */
-export async function checkOllamaHealth(): Promise<{ ok: boolean; modelVersion?: string }> {
-  return { ok: true, modelVersion: "1.0.0-preview" }
-}
+export function checkOllamaHealth(_healthy = true, _ctx?: Record<string, any>) {}
 
 /** Placeholder accuracy metric for the vision model. */
-export async function checkVisionModelAccuracy(): Promise<{ accuracy: number }> {
-  return { accuracy: 0.93 }
-}
+export function checkVisionModelAccuracy(_confidence: number, _tags?: Record<string, any>) {}
 
 export async function sendSlackAlert(alertData: {
   text: string

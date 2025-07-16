@@ -69,14 +69,34 @@ export interface DemoUser {
   createdAt: number
 }
 
-export type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled"
+export type SubscriptionStatus = "active" | "past_due" | "canceled"
 
-export interface Shop {
+/**
+ * Simple mock data used only when Convex isn’t available (e.g. in v0 preview
+ * or during a static export build on Vercel). Feel free to extend as needed.
+ */
+
+export type Shop = {
   _id: string
   name: string
-  userRole: "Owner" | "Admin" | "Tech"
-  subscription: { plan: "starter" | "pro" | "enterprise"; status: SubscriptionStatus }
+  userRole: "admin" | "manager" | "viewer"
+  subscription: { plan: "free" | "pro"; status: "active" | "past_due" | "canceled" }
 }
+
+export const shops: Shop[] = [
+  {
+    _id: "shop_01",
+    name: "Downtown Auto Spa",
+    userRole: "admin",
+    subscription: { plan: "pro", status: "active" },
+  },
+  {
+    _id: "shop_02",
+    name: "Uptown Repair Hub",
+    userRole: "manager",
+    subscription: { plan: "free", status: "active" },
+  },
+]
 
 // Demo shops data
 export const demoShops: DemoShop[] = [
@@ -174,9 +194,6 @@ export const demoShops: DemoShop[] = [
     },
   },
 ]
-
-// Alias so pages can import { shops } without breaking when Convex isn’t running
-export const shops: DemoShop[] = demoShops
 
 // Demo inspections data
 export const demoInspections: DemoInspection[] = [
@@ -307,11 +324,14 @@ export const demoUsers: DemoUser[] = [
 // -----------------------------------------------------------------
 // Aggregated dashboard metrics
 // -----------------------------------------------------------------
+/**
+ * Dashboard-style aggregates that mimic what you’d normally compute in Convex.
+ */
 export const dashboards = {
-  inspections: { total: 128, completed: 102, inProgress: 26 },
-  customers: 54,
-  vehicles: 87,
-  users: 11,
+  inspections: { total: 128, completed: 97, inProgress: 31 },
+  customers: 53,
+  vehicles: 214,
+  users: 12,
 }
 
 // Aggregate demo data for dashboard

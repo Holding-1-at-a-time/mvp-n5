@@ -1,17 +1,17 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import dynamic from "next/dynamic"
 
 /* ---------------------------------------------------------------------
- * IMPORTANT: When Convex is running, comment the next line and re-enable
- * the original `api` + `useQuery` imports to use live data.
+ *  When Convex is running locally, comment the line below and re-enable
+ *  the original `useQuery(api…)` imports.
  * ------------------------------------------------------------------- */
 import { dashboards, shops as demoShops } from "@/lib/demo-data"
 
-// import { useQuery } from "convex/react"           // ← enable later
-// import { api } from "@/convex/_generated/api"     // ← enable later
+// import { useQuery } from "convex/react"
+// import { api } from "@/convex/_generated/api"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,28 +19,42 @@ import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/ui/logo"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Users, Car, ClipboardCheck, Building2, Plus } from "lucide-react"
-import { ShopManagement } from "@/components/admin/shop-management"
-import { UserManagement } from "@/components/admin/user-management"
-import { CustomerManagement } from "@/components/admin/customer-management"
-import { VehicleManagement } from "@/components/admin/vehicle-management"
-import { InspectionManagement } from "@/components/admin/inspection-management"
-import { SystemSettings } from "@/components/admin/system-settings"
+
+/* --------  Dynamically loaded (client-side only) management panes  ------- */
+const InspectionManagement = dynamic(() => import("@/components/admin/inspection-management").then((m) => m.default), {
+  ssr: false,
+})
+const CustomerManagement = dynamic(() => import("@/components/admin/customer-management").then((m) => m.default), {
+  ssr: false,
+})
+const VehicleManagement = dynamic(() => import("@/components/admin/vehicle-management").then((m) => m.default), {
+  ssr: false,
+})
+const UserManagement = dynamic(() => import("@/components/admin/user-management").then((m) => m.default), {
+  ssr: false,
+})
+const ShopManagement = dynamic(() => import("@/components/admin/shop-management").then((m) => m.default), {
+  ssr: false,
+})
+const SystemSettings = dynamic(() => import("@/components/admin/system-settings").then((m) => m.default), {
+  ssr: false,
+})
+/* ----------------------------------------------------------------------- */
 
 export default function AdminDashboard() {
   const [selectedShopId, setSelectedShopId] = useState<string>("")
 
-  /* ------------------ MOCK DATA  ------------------ */
+  /* ---------------- Mock data ---------------- */
   const shops = demoShops
-  const currentShop = shops.find((shop) => shop._id === selectedShopId) ?? shops[0]
+  const currentShop = shops.find((s) => s._id === selectedShopId) ?? shops[0]
 
   const inspectionStats = dashboards.inspections
   const customersCount = dashboards.customers
   const vehiclesCount = dashboards.vehicles
   const usersCount = dashboards.users
-  /* ------------------------------------------------ */
+  /* ------------------------------------------- */
 
-  // ---------- Loading / empty states for preview only ----------
-  if (!shops || shops.length === 0) {
+  if (!shops?.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="glass-effect w-96">
@@ -62,7 +76,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
+      {/* ---------- Header ---------- */}
       <header className="border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -87,13 +101,14 @@ export default function AdminDashboard() {
                 </option>
               ))}
             </select>
-            <StatusBadge status={currentShop.subscription?.status} type="subscription" />
+            <StatusBadge status={currentShop.subscription.status} type="subscription" />
           </div>
         </div>
       </header>
 
+      {/* ---------- Body ---------- */}
       <main className="container mx-auto px-4 py-8">
-        {/* Overview Cards */}
+        {/* Overview cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <OverviewCard
             title="Total Inspections"
@@ -128,7 +143,7 @@ export default function AdminDashboard() {
               <TabsTrigger
                 key={tab}
                 value={tab}
-                className="data-[state=active]:bg-[#00ae98] data-[state=active]:text-white capitalize"
+                className="capitalize data-[state=active]:bg-[#00ae98] data-[state=active]:text-white"
               >
                 {tab}
               </TabsTrigger>
@@ -136,7 +151,6 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="inspections">
-            {/* Stubbed component for preview */}
             <InspectionManagement shopId={currentShop._id} />
           </TabsContent>
           <TabsContent value="customers">
@@ -160,7 +174,7 @@ export default function AdminDashboard() {
   )
 }
 
-/* ---------- Small presentational helper ---------- */
+/* ---------- Helper ---------- */
 interface OverviewCardProps {
   title: string
   value: number
