@@ -27,21 +27,34 @@ declare const fullApi: ApiFromModules<{
   workflows: typeof workflows
 }>
 export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>
+const internalApiStub: FilterApi<typeof fullApi, FunctionReference<any, "internal">> = makeDeepProxy()
 
-// ---------- Runtime stubs (added by v0) ----------
-/**
- * During local development `convex dev` generates a fully-featured
- * implementation.  In preview/CI we expose no-op proxies so that
- * the app can bundle without Convex running.
+/* ---------- Runtime stubs (improved by v0) ----------
+ * These proxies let the bundle compile and run in Preview / CI environments
+ * where Convex isn’t available.  Accessing paths like `api.foo.bar` is fine,
+ * but **calling** the function will throw with a clear message.
+ * Run `npx convex dev` locally or deploy with Convex enabled to get the
+ * fully-featured client.
  */
-function makeNoopProxy(name: string) {
+
+function makeDeepProxy(path: string[] = []): any {
   return new Proxy(
-    {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    () => {},
     {
-      get() {
+      get(_, prop) {
+        // Special cases to keep tooling / React happy
+        if (prop === "then") return undefined // allow `await api.foo`
+        if (prop === Symbol.toStringTag) return "ConvexFunctionReference"
+
+        // Build a longer path as we traverse
+        return makeDeepProxy([...path, String(prop)])
+      },
+      apply() {
         throw new Error(
-          `${name} proxy is a stub in this build. Run "npx convex dev" or deploy with Convex enabled to use server functions.`,
+          `api proxy is a stub in this build. Tried to invoke "${path.join(
+            ".",
+          )}".\nRun "npx convex dev" or deploy with Convex enabled to use server functions.`,
         )
       },
     },
@@ -49,14 +62,9 @@ function makeNoopProxy(name: string) {
 }
 
 // Runtime (value) exports
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const apiRuntime = makeNoopProxy("api")
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const internalRuntime = makeNoopProxy("internal")
-
-// Optional: keep empty components object to satisfy any stray import
+// These satisfy imports like `import { api } from "@/convex/_generated/api"`
+export const api = makeDeepProxy()
+export const internalApi = internalApiStub
+// Keep an empty components object to satisfy any stray import
 export const components = {}
-
-export const api = apiRuntime
-export const internal = internalRuntime
-// -------------------------------------------------
+/* ---------------------------------------------------- */
