@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import dynamic from "next/dynamic"
 
 /* ---------------------------------------------------------------------
@@ -21,23 +21,29 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Users, Car, ClipboardCheck, Building2, Plus } from "lucide-react"
 
 /* --------  Dynamically loaded (client-side only) management panes  ------- */
-const InspectionManagement = dynamic(() => import("@/components/admin/inspection-management").then((m) => m.default), {
+const InspectionManagement = dynamic(() => import("@/components/admin/inspection-management"), {
   ssr: false,
+  loading: () => <p>Loading Inspection Management...</p>,
 })
-const CustomerManagement = dynamic(() => import("@/components/admin/customer-management").then((m) => m.default), {
+const CustomerManagement = dynamic(() => import("@/components/admin/customer-management"), {
   ssr: false,
+  loading: () => <p>Loading Customer Management...</p>,
 })
-const VehicleManagement = dynamic(() => import("@/components/admin/vehicle-management").then((m) => m.default), {
+const VehicleManagement = dynamic(() => import("@/components/admin/vehicle-management"), {
   ssr: false,
+  loading: () => <p>Loading Vehicle Management...</p>,
 })
-const UserManagement = dynamic(() => import("@/components/admin/user-management").then((m) => m.default), {
+const UserManagement = dynamic(() => import("@/components/admin/user-management"), {
   ssr: false,
+  loading: () => <p>Loading User Management...</p>,
 })
-const ShopManagement = dynamic(() => import("@/components/admin/shop-management").then((m) => m.default), {
+const ShopManagement = dynamic(() => import("@/components/admin/shop-management"), {
   ssr: false,
+  loading: () => <p>Loading Shop Management...</p>,
 })
-const SystemSettings = dynamic(() => import("@/components/admin/system-settings").then((m) => m.default), {
+const SystemSettings = dynamic(() => import("@/components/admin/system-settings"), {
   ssr: false,
+  loading: () => <p>Loading System Settings...</p>,
 })
 /* ----------------------------------------------------------------------- */
 
@@ -151,22 +157,34 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="inspections">
-            <InspectionManagement shopId={currentShop._id} />
+            <Suspense fallback={<p>Loading...</p>}>
+              <InspectionManagement shopId={currentShop._id} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="customers">
-            <CustomerManagement shopId={currentShop._id} />
+            <Suspense fallback={<p>Loading...</p>}>
+              <CustomerManagement shopId={currentShop._id} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="vehicles">
-            <VehicleManagement shopId={currentShop._id} />
+            <Suspense fallback={<p>Loading...</p>}>
+              <VehicleManagement shopId={currentShop._id} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="users">
-            <UserManagement shopId={currentShop._id} />
+            <Suspense fallback={<p>Loading...</p>}>
+              <UserManagement shopId={currentShop._id} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="shops">
-            <ShopManagement />
+            <Suspense fallback={<p>Loading...</p>}>
+              <ShopManagement />
+            </Suspense>
           </TabsContent>
           <TabsContent value="settings">
-            <SystemSettings shopId={currentShop._id} />
+            <Suspense fallback={<p>Loading...</p>}>
+              <SystemSettings shopId={currentShop._id} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>
