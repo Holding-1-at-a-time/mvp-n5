@@ -21,27 +21,27 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Users, Car, ClipboardCheck, Building2, Plus } from "lucide-react"
 
 /* --------  Dynamically loaded (client-side only) management panes  ------- */
-const InspectionManagement = dynamic(() => import("@/components/admin/inspection-management"), {
-  ssr: false,
-  loading: () => <p>Loading Inspection Management...</p>,
-})
-const CustomerManagement = dynamic(() => import("@/components/admin/customer-management"), {
-  ssr: false,
-  loading: () => <p>Loading Customer Management...</p>,
-})
-const VehicleManagement = dynamic(() => import("@/components/admin/vehicle-management"), {
-  ssr: false,
-  loading: () => <p>Loading Vehicle Management...</p>,
-})
-const UserManagement = dynamic(() => import("@/components/admin/user-management"), {
+const InspectionManagement = dynamic(
+  () => import("@/components/admin/inspection-management").then((m) => m.InspectionManagement),
+  { ssr: false, loading: () => <p>Loading Inspection Management...</p> },
+)
+const CustomerManagement = dynamic(
+  () => import("@/components/admin/customer-management").then((m) => m.CustomerManagement),
+  { ssr: false, loading: () => <p>Loading Customer Management...</p> },
+)
+const VehicleManagement = dynamic(
+  () => import("@/components/admin/vehicle-management").then((m) => m.VehicleManagement),
+  { ssr: false, loading: () => <p>Loading Vehicle Management...</p> },
+)
+const UserManagement = dynamic(() => import("@/components/admin/user-management").then((m) => m.UserManagement), {
   ssr: false,
   loading: () => <p>Loading User Management...</p>,
 })
-const ShopManagement = dynamic(() => import("@/components/admin/shop-management"), {
+const ShopManagement = dynamic(() => import("@/components/admin/shop-management").then((m) => m.ShopManagement), {
   ssr: false,
   loading: () => <p>Loading Shop Management...</p>,
 })
-const SystemSettings = dynamic(() => import("@/components/admin/system-settings"), {
+const SystemSettings = dynamic(() => import("@/components/admin/system-settings").then((m) => m.SystemSettings), {
   ssr: false,
   loading: () => <p>Loading System Settings...</p>,
 })
