@@ -9,6 +9,8 @@ import { ArrowLeft, Camera, Upload, Trash2, RotateCcw, QrCode, AlertCircle } fro
 import Link from "next/link"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
+export const dynamic = "force-dynamic"
+
 interface CapturedPhoto {
   id: string
   url: string

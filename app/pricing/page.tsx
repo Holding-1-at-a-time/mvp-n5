@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calculator, Settings, TrendingUp, Zap, CheckCircle, ArrowRight, DollarSign, Users, Target } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 export default function PricingPage() {
   const [shopSettings, setShopSettings] = useState<ShopSettings>(DEFAULT_SHOP_SETTINGS)
   const [activeTab, setActiveTab] = useState("overview")

@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Code, Database, Eye, Zap, AlertCircle, CheckCircle } from "lucide-react"
+import { useState } from "react"
 
 export function OllamaApiDocs() {
   const requestExample = `{
@@ -72,19 +73,22 @@ export function OllamaApiDocs() {
   ]
 }`
 
-  const curlExample = `curl -X POST https://your-app.vercel.app/api/ai/v1/assess \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "imageUrls": [
-      "https://example.com/vehicle-front.jpg",
-      "https://example.com/vehicle-side.jpg"
-    ],
-    "vinNumber": "1HGBH41JXMN109186",
-    "metadata": {
-      "inspectionId": "insp_123456",
-      "timestamp": 1703097600000
-    }
-  }'`
+  const curlExample = `curl -X POST https://ollama.example.com/api/vision \\
+  -H "Authorization: Bearer YOUR_TOKEN" \\
+  -F "image=@front_left.jpg" -F "prompt=Detect damages"`
+
+  const pythonExample = `import requests, time
+
+url = "https://ollama.example.com/api/vision"
+files = {"image": open("front_left.jpg", "rb")}
+data = {"prompt": "Detect damages"}
+headers = {"Authorization": "Bearer YOUR_TOKEN"}
+
+start = time.time()
+res = requests.post(url, files=files, data=data, headers=headers)
+print("Status:", res.status_code)
+print("Elapsed:", round((time.time() - start) * 1000), "ms")
+print(res.json())`
 
   const jsExample = `// Using fetch API
 async function assessVehicleDamage(imageUrls, vinNumber) {
@@ -121,68 +125,43 @@ async function assessVehicleDamage(imageUrls, vinNumber) {
   }
 }`
 
-  const pythonExample = `import requests
-import json
-
-def assess_vehicle_damage(image_urls, vin_number):
-    """
-    Assess vehicle damage using Ollama AI API
-    
-    Args:
-        image_urls (list): List of vehicle image URLs
-        vin_number (str): 17-character VIN number
-        
-    Returns:
-        dict: Assessment results with damages and estimates
-    """
-    url = "https://your-app.vercel.app/api/ai/v1/assess"
-    
-    payload = {
-        "imageUrls": image_urls,
-        "vinNumber": vin_number,
-        "metadata": {
-            "inspectionId": f"insp_{int(time.time())}",
-            "timestamp": int(time.time() * 1000)
-        }
-    }
-    
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        
-        result = response.json()
-        
-        if not result.get("success"):
-            raise Exception(f"Assessment failed: {result.get('error')}")
-            
-        return result
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
-        raise
-    except Exception as e:
-        print(f"Assessment error: {e}")
-        raise
-
-# Example usage
-if __name__ == "__main__":
-    image_urls = [
-        "https://example.com/vehicle-front.jpg",
-        "https://example.com/vehicle-side.jpg"
+  const endpoints = [
+    {
+      method: "POST",
+      path: "/api/ai/v1/assess",
+      summary: "Run a damage-assessment job on an existing inspection.",
+      request: `{
+  "inspectionId": "abc123",
+  "images": [
+    "https://example.com/front.jpg",
+    "https://example.com/rear.jpg"
+  ]
+}`,
+      response: `{
+  "jobId": "job_456",
+  "status": "processing"
+}`,
+    },
+    {
+      method: "GET",
+      path: "/api/ai/v1/assess/{jobId}",
+      summary: "Poll a damage-assessment job for completion.",
+      request: "N/A",
+      response: `{
+  "jobId": "job_456",
+  "status": "succeeded",
+  "results": {
+    "overallScore": 0.74,
+    "parts": [
+      { "name": "Front Bumper", "severity": "medium" },
+      { "name": "Rear Door",     "severity": "high"   }
     ]
-    vin_number = "1HGBH41JXMN109186"
-    
-    try:
-        result = assess_vehicle_damage(image_urls, vin_number)
-        print(f"Found {len(result['damages'])} damages")
-        print(f"Total estimate: ${result["totalEstimate"]}")
-        print(f"Processing time: {result['processingTimeMs']}ms")
-    except Exception as e:
-        print(f"Error: {e}")`
+  }
+}`,
+    },
+  ]
+
+  const [activeTab, setActiveTab] = useState("request")
 
   return (
     <div className="space-y-6">
@@ -241,42 +220,47 @@ if __name__ == "__main__":
       </Card>
 
       {/* Endpoints */}
-      <Card>
-        <CardHeader>
-          <CardTitle>API Endpoints</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge className="bg-green-100 text-green-800">POST</Badge>
-                <code className="font-mono">/api/ai/v1/assess</code>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Analyze vehicle images for damage detection and generate repair estimates
-              </p>
-            </div>
+      <section className="space-y-8">
+        {endpoints.map(({ method, path, summary, request, response }) => (
+          <Card key={path}>
+            <CardHeader className="flex flex-row items-center gap-2">
+              <Code className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-base font-mono">
+                {method} {path}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">{summary}</p>
 
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge className="bg-blue-100 text-blue-800">GET</Badge>
-                <code className="font-mono">/api/ai/v1/assess</code>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Health check endpoint to verify Ollama service status and model availability
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              {request !== "N/A" && (
+                <>
+                  <h4 className="text-sm font-semibold">Request example</h4>
+                  <pre className="bg-muted rounded p-4 text-xs overflow-x-auto">{request}</pre>
+                </>
+              )}
+
+              <h4 className="text-sm font-semibold">Response example</h4>
+              <pre className="bg-muted rounded p-4 text-xs overflow-x-auto">{response}</pre>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
 
       {/* Request/Response Examples */}
-      <Tabs defaultValue="request" className="w-full">
+      <Tabs defaultValue={activeTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="request">Request</TabsTrigger>
-          <TabsTrigger value="response">Response</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="request" onClick={() => setActiveTab("request")}>
+            Request
+          </TabsTrigger>
+          <TabsTrigger value="response" onClick={() => setActiveTab("response")}>
+            Response
+          </TabsTrigger>
+          <TabsTrigger value="errors" onClick={() => setActiveTab("errors")}>
+            Errors
+          </TabsTrigger>
+          <TabsTrigger value="examples" onClick={() => setActiveTab("examples")}>
+            Examples
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="request" className="space-y-4">
@@ -571,3 +555,5 @@ if __name__ == "__main__":
     </div>
   )
 }
+
+export default OllamaApiDocs

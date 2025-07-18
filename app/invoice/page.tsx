@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Download, Mail, Phone, MapPin, Calendar, Clock, CreditCard } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
+
 interface InvoiceItem {
   description: string
   quantity: number

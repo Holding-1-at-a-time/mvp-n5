@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Download, Edit, MapPin } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
+
 interface DamageItem {
   id: string
   type: string

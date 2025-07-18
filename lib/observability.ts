@@ -43,6 +43,24 @@ export async function trackMetric(name: string, value: number, tags?: Record<str
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Error-tracking helper                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tiny wrapper around console/Sentry/etc. to avoid missing-export build errors.
+ * Swap this out with your preferred monitoring stack in production.
+ */
+
+type ExtraContext = Record<string, unknown> | undefined
+
+export function trackError(error: unknown, context: ExtraContext = {}): void {
+  // Replace with real telemetry (e.g., Sentry.captureException).
+  // Keeping it simple here to satisfy type & runtime checks.
+  // eslint-disable-next-line no-console
+  console.error("Tracked error:", error, "Context:", context)
+}
+
 // Store recent metrics for failure rate calculation
 const recentMetrics = new Map<string, Array<{ timestamp: number; success: boolean }>>()
 

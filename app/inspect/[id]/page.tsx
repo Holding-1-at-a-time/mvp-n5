@@ -10,6 +10,8 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Clock, AlertCircle, Camera, Brain, FileText } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 interface InspectionStatusPageProps {
   params: {
     id: string
