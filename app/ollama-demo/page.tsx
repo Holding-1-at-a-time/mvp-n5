@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Brain, Zap, Eye, Database } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 export default function OllamaDemoPage() {
   return (
     <div className="container mx-auto py-8 space-y-8">

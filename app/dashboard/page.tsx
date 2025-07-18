@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DollarSign, Clock, TrendingUp, Camera, CheckCircle, AlertCircle, Plus } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 interface Job {
   id: string
   date: string

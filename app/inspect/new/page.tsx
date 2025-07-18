@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { createInspection } from "./actions"
 
+export const dynamic = "force-dynamic"
+
 interface CapturedImage {
   id: string
   blob: Blob
