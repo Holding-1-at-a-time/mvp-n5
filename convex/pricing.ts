@@ -52,6 +52,8 @@ export const getShopSettings = query({
             vehicleTypeMultipliers: { car: 1.0, suv: 1.25, truck: 1.4 },
           },
         },
+        serviceTaxRate: 0.08, // Default service tax rate
+        materialTaxRate: 0.07, // Default material tax rate
         createdAt: Date.now(),
         updatedAt: Date.now(),
       }
@@ -84,6 +86,8 @@ export const updateShopSettings = mutation({
       }),
       damageSeverityMultiplier: v.number(),
       areaUnitPrice: v.number(),
+      serviceTaxRate: v.number(), // New field
+      materialTaxRate: v.number(), // New field
     }),
   },
   handler: async (ctx, args) => {

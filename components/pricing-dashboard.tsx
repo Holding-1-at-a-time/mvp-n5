@@ -228,6 +228,39 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                       </div>
                     </div>
                   </div>
+
+                  <Separator />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="service-tax-rate">Service Tax Rate (%)</Label>
+                      <Input
+                        id="service-tax-rate"
+                        type="number"
+                        value={Math.round(settings.serviceTaxRate * 100)}
+                        onChange={(e) =>
+                          updateSettings({ serviceTaxRate: (Number.parseFloat(e.target.value) || 0) / 100 })
+                        }
+                        min="0"
+                        max="100"
+                        step="0.1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="material-tax-rate">Material Tax Rate (%)</Label>
+                      <Input
+                        id="material-tax-rate"
+                        type="number"
+                        value={Math.round(settings.materialTaxRate * 100)}
+                        onChange={(e) =>
+                          updateSettings({ materialTaxRate: (Number.parseFloat(e.target.value) || 0) / 100 })
+                        }
+                        min="0"
+                        max="100"
+                        step="0.1"
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -459,6 +492,30 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                     <div className="text-lg font-semibold">
                       {Math.max(...Object.values(settings.membershipDiscounts)) * 100}%
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Service Tax</div>
+                    <div className="text-lg font-semibold">{Math.round(settings.serviceTaxRate * 100)}%</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Material Tax</div>
+                    <div className="text-lg font-semibold">{Math.round(settings.materialTaxRate * 100)}%</div>
                   </div>
                 </div>
               </CardContent>

@@ -50,6 +50,8 @@ export interface ShopSettings {
   damageSeverityMultiplier: number
   areaUnitPrice: number
   servicePackages: Record<string, ServicePackage>
+  serviceTaxRate: number // New field
+  materialTaxRate: number // New field
 }
 
 export interface ServicePackage {
@@ -320,4 +322,6 @@ export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
       vehicleTypeMultipliers: { car: 1.0, suv: 1.25, truck: 1.4 },
     },
   },
+  serviceTaxRate: 0.08, // Default service tax rate
+  materialTaxRate: 0.07, // Default material tax rate
 }
