@@ -28,6 +28,9 @@ import {
   type DamageMetrics,
   buildPricingParams,
 } from "@/lib/constants"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { toast } from "@/components/ui/use-toast"
 
 interface PricingDashboardProps {
   initialSettings?: ShopSettings
@@ -35,56 +38,35 @@ interface PricingDashboardProps {
 }
 
 export function PricingDashboard({ initialSettings, onSettingsChange }: PricingDashboardProps) {
+  const shopId = "shop123" // Hardcoded for demonstration purposes
+  const shopSettings = useQuery(api.pricing.getShopSettings, { shopId })
+  const updateShopSettings = useMutation(api.pricing.updateShopSettings)
+
   const [settings, setSettings] = useState<ShopSettings>(initialSettings || DEFAULT_SHOP_SETTINGS)
   const [previewParams, setPreviewParams] = useState<PricingParams | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({})
+  const [baseServiceRate, setBaseServiceRate] = useState(0)
+  const [baseMaterialMarkup, setBaseMaterialMarkup] = useState(0)
+  const [serviceTaxRate, setServiceTaxRate] = useState(0)
+  const [materialTaxRate, setMaterialTaxRate] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<{
+    baseServiceRate?: string
+    baseMaterialMarkup?: string
+    serviceTaxRate?: string
+    materialTaxRate?: string
+  }>({})
 
-  // Sample data for preview
-  const sampleVehicle: SlickVehicleSpecs = {
-    year: 2020,
-    make: "Toyota",
-    model: "Camry",
-    trim: "LE",
-    bodyClass: "Sedan",
-    vehicleType: "Passenger Car",
-    doors: 4,
-    cylinders: 4,
-    displacement: 2.5,
-    fuelType: "Gasoline",
-    driveType: "FWD",
-    plantCity: "Georgetown",
-    plantCountry: "USA",
-    gvwr: 4400,
-    ageFactor: 0.05,
-    sizeFactor: 0.1,
-    complexityFactor: 0.05,
-    specialtyFactor: 0.0,
-  }
+  useEffect(() => {
+    if (shopSettings) {
+      setBaseServiceRate(shopSettings.baseServiceRate)
+      setBaseMaterialMarkup(shopSettings.baseMaterialMarkup)
+      setServiceTaxRate(shopSettings.serviceTaxRate * 100) // Convert to percentage for display
+      setMaterialTaxRate(shopSettings.materialTaxRate * 100) // Convert to percentage for display
+    }
+  }, [shopSettings])
 
-  const sampleDamages: DamageMetrics = {
-    count: 2,
-    averageSeverity: 0.6,
-    totalArea: 0.5,
-    types: ["scratch", "dent"],
-    locations: ["front_bumper", "driver_door"],
-  }
-
-  const sampleCustomer = {
-    membershipTier: "Silver",
-    loyaltyPoints: 250,
-    historicalSpend: 500,
-    preferredServices: ["premium_detail"],
-  }
-
-  const sampleMarket = {
-    weatherFactor: 1.0,
-    seasonalDemand: 1.15,
-    competitorIndex: 0.02,
-    localDemand: 1.1,
-  }
-
-  // Update preview when settings change
   useEffect(() => {
     const servicePackage = settings.servicePackages.premium_detail
     if (servicePackage) {
@@ -141,7 +123,17 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
     setHasUnsavedChanges(true)
   }
 
-  const saveSettings = () => {
+  const validateInputs = () => {
+    const newErrors: typeof errors = {}
+    if (baseServiceRate < 0) newErrors.baseServiceRate = "Rate cannot be negative."
+    if (baseMaterialMarkup < 0) newErrors.baseMaterialMarkup = "Markup cannot be negative."
+    if (serviceTaxRate < 0 || serviceTaxRate > 100) newErrors.serviceTaxRate = "Tax rate must be between 0 and 100."
+    if (materialTaxRate < 0 || materialTaxRate > 100) newErrors.materialTaxRate = "Tax rate must be between 0 and 100."
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const saveSettings = async () => {
     // Check if there are any active validation errors before saving
     const hasErrors = Object.values(validationErrors).some((error) => error !== null)
     if (hasErrors) {
@@ -149,8 +141,29 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
       console.error("Cannot save settings due to validation errors.")
       return
     }
-    onSettingsChange?.(settings)
-    setHasUnsavedChanges(false)
+    setIsLoading(true)
+    try {
+      await updateShopSettings({
+        shopId,
+        baseServiceRate,
+        baseMaterialMarkup,
+        serviceTaxRate: serviceTaxRate / 100, // Convert back to decimal for storage
+        materialTaxRate: materialTaxRate / 100, // Convert back to decimal for storage
+      })
+      toast({
+        title: "Settings Saved",
+        description: "Your pricing settings have been updated successfully.",
+      })
+    } catch (error) {
+      console.error("Failed to update shop settings:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const resetSettings = () => {
@@ -159,7 +172,51 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
     setValidationErrors({}) // Clear validation errors on reset
   }
 
-  const hasAnyErrors = Object.values(validationErrors).some((error) => error !== null)
+  const hasAnyErrors = Object.values(validationErrors).length > 0
+
+  // Sample data for preview
+  const sampleVehicle: SlickVehicleSpecs = {
+    year: 2020,
+    make: "Toyota",
+    model: "Camry",
+    trim: "LE",
+    bodyClass: "Sedan",
+    vehicleType: "Passenger Car",
+    doors: 4,
+    cylinders: 4,
+    displacement: 2.5,
+    fuelType: "Gasoline",
+    driveType: "FWD",
+    plantCity: "Georgetown",
+    plantCountry: "USA",
+    gvwr: 4400,
+    ageFactor: 0.05,
+    sizeFactor: 0.1,
+    complexityFactor: 0.05,
+    specialtyFactor: 0.0,
+  }
+
+  const sampleDamages: DamageMetrics = {
+    count: 2,
+    averageSeverity: 0.6,
+    totalArea: 0.5,
+    types: ["scratch", "dent"],
+    locations: ["front_bumper", "driver_door"],
+  }
+
+  const sampleCustomer = {
+    membershipTier: "Silver",
+    loyaltyPoints: 250,
+    historicalSpend: 500,
+    preferredServices: ["premium_detail"],
+  }
+
+  const sampleMarket = {
+    weatherFactor: 1.0,
+    seasonalDemand: 1.15,
+    competitorIndex: 0.02,
+    localDemand: 1.1,
+  }
 
   return (
     <div className="space-y-6">
@@ -285,7 +342,7 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                       <Input
                         id="service-tax-rate"
                         type="number"
-                        value={Math.round(settings.serviceTaxRate * 100)}
+                        value={Math.round(serviceTaxRate)}
                         onChange={(e) =>
                           updateSettings({ serviceTaxRate: (Number.parseFloat(e.target.value) || 0) / 100 })
                         }
@@ -302,7 +359,7 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                       <Input
                         id="material-tax-rate"
                         type="number"
-                        value={Math.round(settings.materialTaxRate * 100)}
+                        value={Math.round(materialTaxRate)}
                         onChange={(e) =>
                           updateSettings({ materialTaxRate: (Number.parseFloat(e.target.value) || 0) / 100 })
                         }
@@ -557,7 +614,7 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                   <DollarSign className="h-5 w-5 text-purple-600" />
                   <div>
                     <div className="text-sm text-muted-foreground">Service Tax</div>
-                    <div className="text-lg font-semibold">{Math.round(settings.serviceTaxRate * 100)}%</div>
+                    <div className="text-lg font-semibold">{Math.round(serviceTaxRate)}%</div>
                   </div>
                 </div>
               </CardContent>
@@ -569,7 +626,7 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                   <DollarSign className="h-5 w-5 text-orange-600" />
                   <div>
                     <div className="text-sm text-muted-foreground">Material Tax</div>
-                    <div className="text-lg font-semibold">{Math.round(settings.materialTaxRate * 100)}%</div>
+                    <div className="text-lg font-semibold">{Math.round(materialTaxRate)}%</div>
                   </div>
                 </div>
               </CardContent>
