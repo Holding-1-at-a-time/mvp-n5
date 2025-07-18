@@ -73,19 +73,22 @@ export function OllamaApiDocs() {
   ]
 }`
 
-  const curlExample = `curl -X POST https://your-app.vercel.app/api/ai/v1/assess \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "imageUrls": [
-      "https://example.com/vehicle-front.jpg",
-      "https://example.com/vehicle-side.jpg"
-    ],
-    "vinNumber": "1HGBH41JXMN109186",
-    "metadata": {
-      "inspectionId": "insp_123456",
-      "timestamp": 1703097600000
-    }
-  }'`
+  const curlExample = `curl -X POST https://ollama.example.com/api/vision \\
+  -H "Authorization: Bearer YOUR_TOKEN" \\
+  -F "image=@front_left.jpg" -F "prompt=Detect damages"`
+
+  const pythonExample = `import requests, time
+
+url = "https://ollama.example.com/api/vision"
+files = {"image": open("front_left.jpg", "rb")}
+data = {"prompt": "Detect damages"}
+headers = {"Authorization": "Bearer YOUR_TOKEN"}
+
+start = time.time()
+res = requests.post(url, files=files, data=data, headers=headers)
+print("Status:", res.status_code)
+print("Elapsed:", round((time.time() - start) * 1000), "ms")
+print(res.json())`
 
   const jsExample = `// Using fetch API
 async function assessVehicleDamage(imageUrls, vinNumber) {
@@ -121,70 +124,6 @@ async function assessVehicleDamage(imageUrls, vinNumber) {
     throw error;
   }
 }`
-
-  const pythonExample = `import requests
-import json
-import time
-
-def assess_vehicle_damage(image_urls, vin_number):
-    """
-    Assess vehicle damage using Ollama AI API
-    
-    Args:
-        image_urls (list): List of vehicle image URLs
-        vin_number (str): 17-character VIN number
-        
-    Returns:
-        dict: Assessment results with damages and estimates
-    """
-    url = "https://your-app.vercel.app/api/ai/v1/assess"
-    
-    payload = {
-        "imageUrls": image_urls,
-        "vinNumber": vin_number,
-        "metadata": {
-            "inspectionId": f"insp_{int(time.time())}",
-            "timestamp": int(time.time() * 1000)
-        }
-    }
-    
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        
-        result = response.json()
-        
-        if not result.get("success"):
-            raise Exception(f"Assessment failed: {result.get('error')}")
-            
-        return result
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
-        raise
-    except Exception as e:
-        print(f"Assessment error: {e}")
-        raise
-
-# Example usage
-if __name__ == "__main__":
-    image_urls = [
-        "https://example.com/front.jpg",
-        "https://example.com/rear.jpg"
-    ]
-    vin_number = "1HGBH41JXMN109186"
-    
-    try:
-        result = assess_vehicle_damage(image_urls, vin_number)
-        print(f"Found {len(result['damages'])} damages")
-        print(f"Total estimate: ${result["totalEstimate"]}")
-        print(f"Processing time: {result['processingTimeMs']}ms")
-    except Exception as e:
-        print(f"Error: {e}")`
 
   const endpoints = [
     {

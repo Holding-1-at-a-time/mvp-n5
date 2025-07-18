@@ -27,14 +27,15 @@ import type * as users from "../users.js"
 import type * as vehicles from "../vehicles.js"
 import type * as workflows from "../workflows.js"
 import type * as workflows_v2 from "../workflows-v2.js"
+import type * as components from "../components.js"
 
 /**
  * A utility for referencing Convex functions in your app's API.
  *
  * Usage:
- * ```js
+ * \`\`\`js
  * const myFunctionReference = api.myModule.myFunction;
- * ```
+ * \`\`\`
  */
 export const api: ApiFromModules<{
   addKnowledgeBase: typeof addKnowledgeBase
@@ -55,6 +56,7 @@ export const api: ApiFromModules<{
   vehicles: typeof vehicles
   workflows: typeof workflows
   "workflows-v2": typeof workflows_v2
+  components: typeof components
 }> = {} as any
 
 // Create a proxy that allows property access but throws on function calls
