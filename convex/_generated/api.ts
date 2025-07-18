@@ -59,24 +59,22 @@ export const api: ApiFromModules<{
   components: typeof components
 }> = {} as any
 
-// Create a proxy that allows property access but throws on function calls
-const createStubProxy = (path: string[] = []): any => {
-  return new Proxy(() => {}, {
-    get(target, prop) {
-      if (typeof prop === "string") {
-        return createStubProxy([...path, prop])
-      }
-      return undefined
-    },
-    apply() {
-      throw new Error(
-        `api proxy is a stub in this build. Run "npx convex dev" or deploy with Convex enabled to use server functions.\n\nAttempted to call: api.${path.join(".")}`,
-      )
-    },
-  })
-}
+// --- runtime stub (works in both browser & node) -----------------
+Object.assign(
+  api,
+  (function createStubProxy(path: string[] = []) {
+    return new Proxy(() => {}, {
+      get(_t, prop) {
+        if (typeof prop === "string") return createStubProxy([...path, prop])
+        return undefined
+      },
+      apply() {
+        throw new Error(
+          `api proxy is a stub in this build. Run "npx convex dev" or deploy with Convex enabled to use server functions.
 
-// Only use stub in build environments
-if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
-  Object.assign(api, createStubProxy())
-}
+Attempted to call: api.${path.join(".")}`,
+        )
+      },
+    })
+  })(),
+)

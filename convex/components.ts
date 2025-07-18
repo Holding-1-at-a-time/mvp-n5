@@ -1,10 +1,12 @@
+import { query } from "./_generated/server"
+
 /**
- * Minimal Convex module so `api.components.*` imports resolve.
- * Replace with real queries/mutations later.
+ * A no-op stub so `api.components.hello` exists at runtime.
+ * Replace with your real components-module functions later.
  */
-
-import { query } from "convex/server"
-
-export const hello = query(async () => {
-  return "hello from Convex components module"
+export const hello = query({
+  args: {},
+  handler: async () => {
+    return "hello from components stub"
+  },
 })
