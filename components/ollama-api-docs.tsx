@@ -1,15 +1,12 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Code, Database, Eye, Zap, AlertCircle, CheckCircle } from 'lucide-react'
+import { Code, Database, Eye, Zap, AlertCircle, CheckCircle } from "lucide-react"
 import { useState } from "react"
-import time from 'time'
 
 export function OllamaApiDocs() {
   const requestExample = `{
@@ -127,6 +124,7 @@ async function assessVehicleDamage(imageUrls, vinNumber) {
 
   const pythonExample = `import requests
 import json
+import time
 
 def assess_vehicle_damage(image_urls, vin_number):
     """
@@ -183,7 +181,7 @@ if __name__ == "__main__":
     try:
         result = assess_vehicle_damage(image_urls, vin_number)
         print(f"Found {len(result['damages'])} damages")
-        print(f"Total estimate: ${result['totalEstimate']}")
+        print(f"Total estimate: ${result["totalEstimate"]}")
         print(f"Processing time: {result['processingTimeMs']}ms")
     except Exception as e:
         print(f"Error: {e}")`
@@ -615,59 +613,6 @@ if __name__ == "__main__":
           </CardContent>
         </Card>
       </div>
-
-      {/* Vision AI API v1 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Code className="h-5 w-5 text-[#00ae98]" />
-            Vision AI API v1
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="prose prose-invert max-w-none text-sm">
-          <p>
-            The Vision AI API lets you upload vehicle photos and receive JSON damage assessments.
-            All endpoints are scoped to your Convex deployment and secured with bearer tokens.
-          </p>
-
-          <Separator className="my-4" />
-
-          <h3>Base URL</h3>
-          <pre>
-{`POST https://<your-deployment>.vercel.app/api/ai/v1/assess`}
-          </pre>
-
-          <h3>Request Body</h3>
-          <pre className="whitespace-pre-wrap">
-{`Content-Type: multipart/form-data
-
-image:   <binary>
-vin:     17-character VIN (optional)`}
-          </pre>
-
-          <h3>Response (200)</h3>
-          <pre className="whitespace-pre-wrap">
-{`{
-  "inspectionId": "01hv7zhg2w3…",
-  "status": "processing",
-  "queuedAt": 1718019000000
-}`}
-          </pre>
-
-          <Separator className="my-4" />
-
-          <h3>Web-hook Events</h3>
-          <ul>
-            <li><code>inspection.completed</code></li>
-            <li><code>inspection.failed</code></li>
-          </ul>
-
-          <p className="mt-6 text-muted-foreground">
-            See the README for a full OpenAPI schema and webhook signature
-            verification examples.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

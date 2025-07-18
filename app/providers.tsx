@@ -1,23 +1,17 @@
 "use client"
-
-import type React from "react"
-
+import { ConvexProvider } from "convex/react"
 import { ConvexReactClient } from "convex/react"
-import { ClerkProvider, useAuth } from "@clerk/nextjs"
-import { ConvexProviderWithClerk } from "convex/react-clerk"
+import type { ReactNode } from "react"
+import { ClerkProvider } from "@clerk/nextjs"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { env, validateEnv } from "@/lib/env"
 import { useEffect, useState } from "react"
 
 // Create Convex client
-const convex = new ConvexReactClient(env.NEXT_PUBLIC_CONVEX_URL)
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
-export function ConvexClientProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const [isValidated, setIsValidated] = useState(false)
 
   useEffect(() => {
@@ -50,15 +44,15 @@ export function ConvexClientProvider({
         },
       }}
     >
-      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+      <ConvexProvider client={convex}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
           <Toaster />
         </ThemeProvider>
-      </ConvexProviderWithClerk>
+      </ConvexProvider>
     </ClerkProvider>
   )
 }
 
-// Back-compat: some modules still import { Providers }
-export { ConvexClientProvider as Providers }
+// Legacy export for backward compatibility
+export const Providers = ConvexClientProvider
