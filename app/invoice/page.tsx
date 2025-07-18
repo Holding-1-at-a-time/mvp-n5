@@ -15,7 +15,7 @@ interface InvoiceItem {
   quantity: number
   unitPrice: number
   total: number
-  type: "service" | "material" // Added type for tax calculation
+  type: "service" | "material" | "labor" | "parts" // Expanded types
 }
 
 const invoiceItems: InvoiceItem[] = [
@@ -38,7 +38,21 @@ const invoiceItems: InvoiceItem[] = [
     quantity: 1,
     unitPrice: 450.0,
     total: 450.0,
-    type: "material", // Example of a material item
+    type: "material",
+  },
+  {
+    description: "Diagnostic Labor (1 hr)",
+    quantity: 1,
+    unitPrice: 120.0,
+    total: 120.0,
+    type: "labor", // New type: labor
+  },
+  {
+    description: "Replacement Headlight Assembly",
+    quantity: 1,
+    unitPrice: 300.0,
+    total: 300.0,
+    type: "parts", // New type: parts
   },
 ]
 
@@ -49,12 +63,12 @@ export default function InvoicePage() {
   const serviceTaxRate = shopSettings?.serviceTaxRate ?? 0.08 // Default to 8% if not loaded
   const materialTaxRate = shopSettings?.materialTaxRate ?? 0.08 // Default to 8% if not loaded
 
-  const subtotalServices = invoiceItems
-    .filter((item) => item.type === "service")
-    .reduce((sum, item) => sum + item.total, 0)
-  const subtotalMaterials = invoiceItems
-    .filter((item) => item.type === "material")
-    .reduce((sum, item) => sum + item.total, 0)
+  // Group items by their tax category
+  const itemsForServiceTax = invoiceItems.filter((item) => item.type === "service" || item.type === "labor")
+  const itemsForMaterialTax = invoiceItems.filter((item) => item.type === "material" || item.type === "parts")
+
+  const subtotalServices = itemsForServiceTax.reduce((sum, item) => sum + item.total, 0)
+  const subtotalMaterials = itemsForMaterialTax.reduce((sum, item) => sum + item.total, 0)
 
   const taxServices = subtotalServices * serviceTaxRate
   const taxMaterials = subtotalMaterials * materialTaxRate
@@ -221,11 +235,11 @@ export default function InvoicePage() {
                       <span>${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Service Tax ({serviceTaxRate * 100}%):</span>
+                      <span>Service/Labor Tax ({serviceTaxRate * 100}%):</span>
                       <span>${taxServices.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Material Tax ({materialTaxRate * 100}%):</span>
+                      <span>Material/Parts Tax ({materialTaxRate * 100}%):</span>
                       <span>${taxMaterials.toFixed(2)}</span>
                     </div>
                     <Separator />
