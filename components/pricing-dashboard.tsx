@@ -6,30 +6,28 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Settings,
-  DollarSign,
-  TrendingUp,
-  Star,
-  AlertTriangle,
-  CheckCircle,
-  BarChart3,
-  Zap,
-  Target,
-} from "lucide-react"
+import { AlertTriangle } from "lucide-react"
+import { CheckCircle } from "lucide-react"
+import { Settings } from "lucide-react"
+import { TrendingUp } from "lucide-react"
+import { Star } from "lucide-react"
+import { Zap } from "lucide-react"
+import { BarChart3 } from "lucide-react"
+import { DollarSign } from "lucide-react"
+import { Target } from "lucide-react"
+import { PricingBreakdownComponent } from "@/components/pricing-breakdown"
 import {
   type ShopSettings,
   DEFAULT_SHOP_SETTINGS,
   type PricingParams,
+  type SlickVehicleSpecs,
   type DamageMetrics,
   buildPricingParams,
-} from "@/lib/pricing-engine"
-import type { SlickVehicleSpecs } from "@/lib/vin-decoder"
-import { PricingBreakdownComponent } from "./pricing-breakdown"
+} from "@/lib/constants"
 
 interface PricingDashboardProps {
   initialSettings?: ShopSettings
@@ -40,6 +38,7 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
   const [settings, setSettings] = useState<ShopSettings>(initialSettings || DEFAULT_SHOP_SETTINGS)
   const [previewParams, setPreviewParams] = useState<PricingParams | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({})
 
   // Sample data for preview
   const sampleVehicle: SlickVehicleSpecs = {
@@ -103,13 +102,53 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
     }
   }, [settings])
 
+  const validateField = (fieldName: string, value: number, min: number, max: number, errorMessage: string) => {
+    if (value < min || value > max) {
+      setValidationErrors((prev) => ({ ...prev, [fieldName]: errorMessage }))
+      return false
+    } else {
+      setValidationErrors((prev) => ({ ...prev, [fieldName]: null }))
+      return true
+    }
+  }
+
   const updateSettings = (updates: Partial<ShopSettings>) => {
     const newSettings = { ...settings, ...updates }
+
+    let isValid = true
+    if (updates.serviceTaxRate !== undefined) {
+      isValid =
+        validateField(
+          "serviceTaxRate",
+          updates.serviceTaxRate * 100, // Convert to percentage for validation
+          0,
+          100,
+          "Service tax rate must be between 0% and 100%",
+        ) && isValid
+    }
+    if (updates.materialTaxRate !== undefined) {
+      isValid =
+        validateField(
+          "materialTaxRate",
+          updates.materialTaxRate * 100, // Convert to percentage for validation
+          0,
+          100,
+          "Material tax rate must be between 0% and 100%",
+        ) && isValid
+    }
+
     setSettings(newSettings)
     setHasUnsavedChanges(true)
   }
 
   const saveSettings = () => {
+    // Check if there are any active validation errors before saving
+    const hasErrors = Object.values(validationErrors).some((error) => error !== null)
+    if (hasErrors) {
+      // Optionally, show a toast or alert that there are validation errors
+      console.error("Cannot save settings due to validation errors.")
+      return
+    }
     onSettingsChange?.(settings)
     setHasUnsavedChanges(false)
   }
@@ -117,7 +156,10 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
   const resetSettings = () => {
     setSettings(initialSettings || DEFAULT_SHOP_SETTINGS)
     setHasUnsavedChanges(false)
+    setValidationErrors({}) // Clear validation errors on reset
   }
+
+  const hasAnyErrors = Object.values(validationErrors).some((error) => error !== null)
 
   return (
     <div className="space-y-6">
@@ -128,16 +170,22 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
           <p className="text-muted-foreground">Configure dynamic pricing rules and factors</p>
         </div>
         <div className="flex gap-2">
-          {hasUnsavedChanges && (
+          {hasUnsavedChanges && !hasAnyErrors && (
             <Alert className="w-auto">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>You have unsaved changes</AlertDescription>
             </Alert>
           )}
+          {hasAnyErrors && (
+            <Alert variant="destructive" className="w-auto">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>Please fix validation errors</AlertDescription>
+            </Alert>
+          )}
           <Button variant="outline" onClick={resetSettings}>
             Reset
           </Button>
-          <Button onClick={saveSettings} disabled={!hasUnsavedChanges}>
+          <Button onClick={saveSettings} disabled={!hasUnsavedChanges || hasAnyErrors}>
             <CheckCircle className="h-4 w-4 mr-2" />
             Save Changes
           </Button>
@@ -245,6 +293,9 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                         max="100"
                         step="0.1"
                       />
+                      {validationErrors.serviceTaxRate && (
+                        <p className="text-red-500 text-xs">{validationErrors.serviceTaxRate}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="material-tax-rate">Material Tax Rate (%)</Label>
@@ -259,6 +310,9 @@ export function PricingDashboard({ initialSettings, onSettingsChange }: PricingD
                         max="100"
                         step="0.1"
                       />
+                      {validationErrors.materialTaxRate && (
+                        <p className="text-red-500 text-xs">{validationErrors.materialTaxRate}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
