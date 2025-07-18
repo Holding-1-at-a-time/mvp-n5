@@ -1,11 +1,14 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardDescription } from "@/components/ui/card"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Code, Database, Eye, Zap, AlertCircle, CheckCircle } from "lucide-react"
+import { useState } from "react"
 
 export function OllamaApiDocs() {
   const requestExample = `{
@@ -171,8 +174,8 @@ def assess_vehicle_damage(image_urls, vin_number):
 # Example usage
 if __name__ == "__main__":
     image_urls = [
-        "https://example.com/vehicle-front.jpg",
-        "https://example.com/vehicle-side.jpg"
+        "https://example.com/front.jpg",
+        "https://example.com/rear.jpg"
     ]
     vin_number = "1HGBH41JXMN109186"
     
@@ -183,6 +186,44 @@ if __name__ == "__main__":
         print(f"Processing time: {result['processingTimeMs']}ms")
     except Exception as e:
         print(f"Error: {e}")`
+
+  const endpoints = [
+    {
+      method: "POST",
+      path: "/api/ai/v1/assess",
+      summary: "Run a damage-assessment job on an existing inspection.",
+      request: `{
+  "inspectionId": "abc123",
+  "images": [
+    "https://example.com/front.jpg",
+    "https://example.com/rear.jpg"
+  ]
+}`,
+      response: `{
+  "jobId": "job_456",
+  "status": "processing"
+}`,
+    },
+    {
+      method: "GET",
+      path: "/api/ai/v1/assess/{jobId}",
+      summary: "Poll a damage-assessment job for completion.",
+      request: "N/A",
+      response: `{
+  "jobId": "job_456",
+  "status": "succeeded",
+  "results": {
+    "overallScore": 0.74,
+    "parts": [
+      { "name": "Front Bumper", "severity": "medium" },
+      { "name": "Rear Door",     "severity": "high"   }
+    ]
+  }
+}`,
+    },
+  ]
+
+  const [activeTab, setActiveTab] = useState("request")
 
   return (
     <div className="space-y-6">
@@ -241,42 +282,47 @@ if __name__ == "__main__":
       </Card>
 
       {/* Endpoints */}
-      <Card>
-        <CardHeader>
-          <CardTitle>API Endpoints</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge className="bg-green-100 text-green-800">POST</Badge>
-                <code className="font-mono">/api/ai/v1/assess</code>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Analyze vehicle images for damage detection and generate repair estimates
-              </p>
-            </div>
+      <section className="space-y-8">
+        {endpoints.map(({ method, path, summary, request, response }) => (
+          <Card key={path}>
+            <CardHeader className="flex flex-row items-center gap-2">
+              <Code className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-base font-mono">
+                {method} {path}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">{summary}</p>
 
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge className="bg-blue-100 text-blue-800">GET</Badge>
-                <code className="font-mono">/api/ai/v1/assess</code>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Health check endpoint to verify Ollama service status and model availability
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              {request !== "N/A" && (
+                <>
+                  <h4 className="text-sm font-semibold">Request example</h4>
+                  <pre className="bg-muted rounded p-4 text-xs overflow-x-auto">{request}</pre>
+                </>
+              )}
+
+              <h4 className="text-sm font-semibold">Response example</h4>
+              <pre className="bg-muted rounded p-4 text-xs overflow-x-auto">{response}</pre>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
 
       {/* Request/Response Examples */}
-      <Tabs defaultValue="request" className="w-full">
+      <Tabs defaultValue={activeTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="request">Request</TabsTrigger>
-          <TabsTrigger value="response">Response</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="request" onClick={() => setActiveTab("request")}>
+            Request
+          </TabsTrigger>
+          <TabsTrigger value="response" onClick={() => setActiveTab("response")}>
+            Response
+          </TabsTrigger>
+          <TabsTrigger value="errors" onClick={() => setActiveTab("errors")}>
+            Errors
+          </TabsTrigger>
+          <TabsTrigger value="examples" onClick={() => setActiveTab("examples")}>
+            Examples
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="request" className="space-y-4">
@@ -571,3 +617,5 @@ if __name__ == "__main__":
     </div>
   )
 }
+
+export default OllamaApiDocs
