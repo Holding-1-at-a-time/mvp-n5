@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DollarSign, Clock, TrendingUp, Camera, CheckCircle, AlertCircle, Plus } from "lucide-react"
+import Link from "next/link"
 
 interface Job {
   id: string
@@ -107,10 +108,12 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold">Shop Dashboard</h1>
             <p className="text-gray-600">Slick Solutions Auto Care</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Inspection
-          </Button>
+          <Link href="/inspect/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Inspection
+            </Button>
+          </Link>
         </div>
       </div>
 

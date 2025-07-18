@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { z } from "zod"
 
 const V2Schema = {
   $schema: "http://json-schema.org/draft-07/schema#",
@@ -223,6 +224,20 @@ const V2ResponseSchema = {
   },
 }
 
+const inspectionRequestSchema = z.object({
+  vinNumber: z.string().min(17).max(17).describe("Vehicle Identification Number (VIN)"),
+  imageUrls: z.array(z.string().url()).min(1).describe("Array of URLs to vehicle images"),
+  customerId: z.string().optional().describe("Optional ID of the customer associated with the inspection"),
+  shopId: z.string().optional().describe("Optional ID of the shop performing the inspection"),
+})
+
+const inspectionResponseSchema = z.object({
+  success: z.boolean().describe("Indicates if the operation was successful"),
+  inspectionId: z.string().describe("Unique ID of the created inspection"),
+  status: z.enum(["pending", "processing", "complete", "failed"]).describe("Current status of the inspection"),
+  message: z.string().optional().describe("A descriptive message about the operation"),
+})
+
 export async function GET() {
   return NextResponse.json({
     request: V2Schema,
@@ -240,5 +255,7 @@ export async function GET() {
     ],
     documentation: "https://docs.slicksolutions.com/api/v2/inspect",
     migration: "https://docs.slicksolutions.com/api/migration/v1-to-v2",
+    zodRequest: inspectionRequestSchema.shape,
+    zodResponse: inspectionResponseSchema.shape,
   })
 }

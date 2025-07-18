@@ -2,315 +2,204 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Loader2, ImageIcon, CheckCircle, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { useOllamaAssessment } from "@/hooks/use-ollama-assessment"
-import { Camera, Upload, Zap, AlertTriangle, CheckCircle, Clock } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
-interface OllamaDamageDetectorProps {
-  onAssessmentComplete?: (assessment: any) => void
+interface DamageDetectionResult {
+  damage: Array<{
+    type: string
+    location: string
+    severity: "low" | "medium" | "high"
+    description: string
+    estimatedRepairCost: number
+  }>
+  overallCondition: "excellent" | "good" | "fair" | "poor"
+  recommendations: string[]
+  totalEstimatedCost: number
 }
 
-export function OllamaDamageDetector({ onAssessmentComplete }: OllamaDamageDetectorProps) {
-  const [imageUrls, setImageUrls] = useState<string[]>([])
-  const [vinNumber, setVinNumber] = useState("")
-  const [newImageUrl, setNewImageUrl] = useState("")
+export function OllamaDamageDetector() {
+  const [imageUrl, setImageUrl] = useState("")
+  const [vinNumber, setVinNumber] = useState("1HGBH41JXMN109186") // Default VIN
+  const [result, setResult] = useState<DamageDetectionResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const {
-    assessDamage,
-    checkHealth,
-    isLoading,
-    lastAssessment,
-    error,
-    damageCount,
-    totalEstimate,
-    confidence,
-    processingTime,
-    reset,
-  } = useOllamaAssessment()
-
-  const handleAddImage = () => {
-    if (newImageUrl && !imageUrls.includes(newImageUrl)) {
-      setImageUrls([...imageUrls, newImageUrl])
-      setNewImageUrl("")
-    }
-  }
-
-  const handleRemoveImage = (index: number) => {
-    setImageUrls(imageUrls.filter((_, i) => i !== index))
-  }
-
-  const handleAssess = async () => {
-    if (imageUrls.length === 0 || !vinNumber) {
+  const handleDetect = async () => {
+    if (!imageUrl || !vinNumber) {
+      setError("Please provide an image URL and VIN number.")
       return
     }
 
+    setLoading(true)
+    setError(null)
+    setResult(null)
+
     try {
-      const assessment = await assessDamage({
-        imageUrls,
-        vinNumber,
-        metadata: {
-          inspectionId: `demo_${Date.now()}`,
-          timestamp: Date.now(),
+      const response = await fetch("/api/ai/v1/assess", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ imageUrls: [imageUrl], vinNumber }),
       })
 
-      onAssessmentComplete?.(assessment)
-    } catch (err) {
-      // Error is already handled by the hook
-    }
-  }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "minor":
-        return "bg-yellow-100 text-yellow-800"
-      case "moderate":
-        return "bg-orange-100 text-orange-800"
-      case "severe":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getDamageTypeIcon = (type: string) => {
-    switch (type) {
-      case "dent":
-        return "🔨"
-      case "scratch":
-        return "✂️"
-      case "crack":
-        return "💥"
-      case "rust":
-        return "🦠"
-      case "paint_damage":
-        return "🎨"
-      case "glass_damage":
-        return "🪟"
-      default:
-        return "⚠️"
+      const data: DamageDetectionResult = await response.json()
+      setResult(data)
+    } catch (err: any) {
+      setError(err.message || "An unknown error occurred during detection.")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-blue-600" />
-            Ollama AI Damage Detection
+            <ImageIcon className="h-5 w-5" />
+            Ollama Damage Detector
           </CardTitle>
-          <CardDescription>
-            Upload vehicle images and VIN for AI-powered damage assessment using Ollama Vision models
-          </CardDescription>
+          <p className="text-sm text-muted-foreground">
+            Upload an image and VIN to detect vehicle damage using Ollama.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* VIN Input */}
           <div className="space-y-2">
-            <Label htmlFor="vin">Vehicle Identification Number (VIN)</Label>
+            <Label htmlFor="image-url">Image URL</Label>
             <Input
-              id="vin"
-              placeholder="Enter 17-character VIN"
-              value={vinNumber}
-              onChange={(e) => setVinNumber(e.target.value.toUpperCase())}
-              maxLength={17}
-              className="font-mono"
+              id="image-url"
+              placeholder="e.g., https://example.com/car-damage.jpg"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
             />
-            {vinNumber && vinNumber.length !== 17 && (
-              <p className="text-sm text-red-600">VIN must be exactly 17 characters</p>
-            )}
+            <p className="text-xs text-muted-foreground">Provide a direct URL to an image of a vehicle with damage.</p>
           </div>
-
-          {/* Image URL Input */}
           <div className="space-y-2">
-            <Label htmlFor="image-url">Vehicle Image URLs</Label>
-            <div className="flex gap-2">
-              <Input
-                id="image-url"
-                placeholder="https://example.com/vehicle-image.jpg"
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleAddImage()}
-              />
-              <Button onClick={handleAddImage} disabled={!newImageUrl}>
-                <Upload className="h-4 w-4 mr-2" />
-                Add
-              </Button>
-            </div>
+            <Label htmlFor="vin-number">VIN Number</Label>
+            <Input
+              id="vin-number"
+              placeholder="Enter VIN"
+              value={vinNumber}
+              onChange={(e) => setVinNumber(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">A valid VIN helps the AI understand the vehicle context.</p>
           </div>
-
-          {/* Image List */}
-          {imageUrls.length > 0 && (
-            <div className="space-y-2">
-              <Label>Added Images ({imageUrls.length})</Label>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {imageUrls.map((url, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span className="text-sm truncate flex-1">{url}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveImage(index)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={handleAssess}
-              disabled={isLoading || imageUrls.length === 0 || vinNumber.length !== 17}
-              className="flex-1"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Camera className="h-4 w-4 mr-2" />
-                  Assess Damage
-                </>
-              )}
-            </Button>
-            <Button variant="outline" onClick={reset}>
-              Reset
-            </Button>
-          </div>
-
-          {/* Loading Progress */}
-          {isLoading && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Processing with Ollama...</span>
-                <span className="text-muted-foreground">This may take a few moments</span>
-              </div>
-              <Progress value={undefined} className="w-full" />
-            </div>
-          )}
+          <Button onClick={handleDetect} disabled={loading || !imageUrl || !vinNumber}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? "Detecting..." : "Detect Damage"}
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Error Display */}
       {error && (
         <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <XCircle className="h-4 w-4" />
+          <AlertDescription>Error: {error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Results */}
-      {lastAssessment && (
+      {result && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Assessment Results
-              </span>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {processingTime}ms
-              </Badge>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Detection Results
             </CardTitle>
-            <CardDescription>
-              VIN: {lastAssessment.vinNumber} • Model: {lastAssessment.metadata.modelVersion}
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{damageCount}</div>
-                <div className="text-sm text-blue-800">Damages Found</div>
+          <CardContent className="space-y-6">
+            {imageUrl && (
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">Input Image:</h3>
+                <img
+                  src={imageUrl || "/placeholder.svg"}
+                  alt="Vehicle for detection"
+                  className="max-w-full h-auto rounded-lg"
+                />
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{Math.round(confidence * 100)}%</div>
-                <div className="text-sm text-green-800">Confidence</div>
-              </div>
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">${totalEstimate.toLocaleString()}</div>
-                <div className="text-sm text-purple-800">Est. Repair Cost</div>
-              </div>
+            )}
+
+            <Separator />
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Overall Condition:</h3>
+              <Badge
+                variant={
+                  result.overallCondition === "excellent"
+                    ? "default"
+                    : result.overallCondition === "good"
+                      ? "secondary"
+                      : result.overallCondition === "fair"
+                        ? "outline"
+                        : "destructive"
+                }
+                className="capitalize text-base"
+              >
+                {result.overallCondition}
+              </Badge>
             </div>
 
             <Separator />
 
-            {/* Performance Metrics */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Vision Processing:</span>
-                <span className="font-mono">{lastAssessment.metadata.ollamaLatency}ms</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Embedding Generation:</span>
-                <span className="font-mono">{lastAssessment.metadata.embeddingLatency}ms</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Images Processed:</span>
-                <span className="font-mono">{lastAssessment.metadata.imageCount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Embeddings Generated:</span>
-                <span className="font-mono">{lastAssessment.embeddings.length}</span>
-              </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Detected Damages ({result.damage.length}):</h3>
+              {result.damage.length > 0 ? (
+                <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                  <div className="space-y-4">
+                    {result.damage.map((d, index) => (
+                      <div key={index} className="border-b pb-4 last:border-b-0 last:pb-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">{d.type}</span>
+                          <Badge
+                            variant={
+                              d.severity === "low" ? "secondary" : d.severity === "medium" ? "default" : "destructive"
+                            }
+                            className="capitalize"
+                          >
+                            {d.severity}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Location: {d.location}</p>
+                        <p className="text-sm text-muted-foreground">Description: {d.description}</p>
+                        <p className="text-sm font-semibold mt-1">Estimated Cost: ${d.estimatedRepairCost}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-muted-foreground">No significant damage detected.</p>
+              )}
             </div>
 
-            {/* Damage Details */}
-            {lastAssessment.damages.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h4 className="font-semibold">Detected Damages</h4>
-                  {lastAssessment.damages.map((damage, index) => (
-                    <div key={damage.id} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{getDamageTypeIcon(damage.type)}</span>
-                          <span className="font-medium capitalize">{damage.type.replace("_", " ")}</span>
-                          <Badge className={getSeverityColor(damage.severity)}>{damage.severity}</Badge>
-                        </div>
-                        <Badge variant="outline">{Math.round(damage.confidence * 100)}% confidence</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{damage.description}</p>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Location: {damage.location}</span>
-                        <span>
-                          Bounding Box: [{damage.boundingBox.x}, {damage.boundingBox.y}, {damage.boundingBox.width},{" "}
-                          {damage.boundingBox.height}]
-                        </span>
-                      </div>
-                      {damage.embedding && (
-                        <div className="text-xs text-muted-foreground">
-                          Embedding: {damage.embedding.length} dimensions
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+            <Separator />
 
-            {lastAssessment.damages.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
-                <p>No damage detected in the provided images.</p>
-                <p className="text-sm">The vehicle appears to be in good condition.</p>
-              </div>
-            )}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Total Estimated Cost:</h3>
+              <p className="text-2xl font-bold text-blue-600">${result.totalEstimatedCost}</p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Recommendations:</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                {result.recommendations.map((rec, index) => (
+                  <li key={index}>{rec}</li>
+                ))}
+              </ul>
+            </div>
           </CardContent>
         </Card>
       )}

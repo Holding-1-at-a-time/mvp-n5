@@ -2,8 +2,9 @@
 
 import { api } from "@/convex/_generated/api"
 import { ConvexHttpClient } from "convex/browser"
+import { env } from "@/lib/env"
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL!)
 
 export async function createInspection(formData: FormData) {
   try {

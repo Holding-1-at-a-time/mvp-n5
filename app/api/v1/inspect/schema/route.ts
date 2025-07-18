@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server"
+import { z } from "zod"
 
 const V1Schema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   title: "Vehicle Inspection API v1",
   description: "Image-based vehicle inspection API for damage detection and assessment",
   type: "object",
-  required: ["vin", "images"],
+  required: ["vinNumber", "imageUrls"],
   properties: {
-    vin: {
+    vinNumber: {
       type: "string",
       pattern: "^[A-HJ-NPR-Z0-9]{17}$",
       description: "17-character Vehicle Identification Number",
     },
-    images: {
+    imageUrls: {
       type: "array",
       minItems: 1,
       maxItems: 20,
@@ -47,8 +48,8 @@ const V1Schema = {
   additionalProperties: false,
   examples: [
     {
-      vin: "1HGBH41JXMN109186",
-      images: ["https://example.com/front.jpg", "https://example.com/rear.jpg", "https://example.com/side.jpg"],
+      vinNumber: "1HGBH41JXMN109186",
+      imageUrls: ["https://example.com/front.jpg", "https://example.com/rear.jpg", "https://example.com/side.jpg"],
       metadata: {
         location: {
           latitude: 37.7749,
@@ -110,6 +111,18 @@ const V1ResponseSchema = {
     apiVersion: { type: "string", const: "1.0" },
   },
 }
+
+const inspectionRequestSchema = z.object({
+  vinNumber: z.string().min(17).max(17).describe("Vehicle Identification Number (VIN)"),
+  imageUrls: z.array(z.string().url()).min(1).describe("Array of URLs to vehicle images"),
+})
+
+const inspectionResponseSchema = z.object({
+  success: z.boolean().describe("Indicates if the operation was successful"),
+  inspectionId: z.string().describe("Unique ID of the created inspection"),
+  status: z.enum(["pending", "processing", "complete", "failed"]).describe("Current status of the inspection"),
+  message: z.string().optional().describe("A descriptive message about the operation"),
+})
 
 export async function GET() {
   return NextResponse.json({

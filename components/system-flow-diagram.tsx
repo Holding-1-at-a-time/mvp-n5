@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
+import mermaid from "mermaid"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -32,9 +32,10 @@ interface FlowStep {
 interface SystemFlowDiagramProps {
   inspectionId?: string
   realTime?: boolean
+  diagramCode?: string
 }
 
-export function SystemFlowDiagram({ inspectionId, realTime = false }: SystemFlowDiagramProps) {
+export function SystemFlowDiagram({ inspectionId, realTime = false, diagramCode }: SystemFlowDiagramProps) {
   const [steps, setSteps] = useState<FlowStep[]>([
     {
       id: "capture",
@@ -86,7 +87,8 @@ export function SystemFlowDiagram({ inspectionId, realTime = false }: SystemFlow
     estimateAccuracy: 0,
   })
 
-  // Simulate real-time updates if enabled
+  const mermaidRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!realTime) return
 
@@ -143,6 +145,17 @@ export function SystemFlowDiagram({ inspectionId, realTime = false }: SystemFlow
 
     return () => clearInterval(interval)
   }, [realTime, steps])
+
+  useEffect(() => {
+    if (mermaidRef.current && diagramCode) {
+      mermaid.initialize({ startOnLoad: false })
+      mermaid.render("flowchart-diagram", diagramCode).then(({ svg }) => {
+        if (mermaidRef.current) {
+          mermaidRef.current.innerHTML = svg
+        }
+      })
+    }
+  }, [diagramCode])
 
   const getStatusColor = (status: FlowStep["status"]) => {
     switch (status) {
@@ -324,6 +337,13 @@ export function SystemFlowDiagram({ inspectionId, realTime = false }: SystemFlow
           </div>
         </CardContent>
       </Card>
+
+      {/* Mermaid Diagram */}
+      {diagramCode && (
+        <div className="w-full overflow-auto p-4 border rounded-lg bg-white dark:bg-gray-900">
+          <div ref={mermaidRef} className="mermaid" />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,357 +1,282 @@
 "use client"
 
+import { CardDescription } from "@/components/ui/card"
+
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LucideBarChart, LucideLineChart, Activity, Server, AlertTriangle, Info } from "lucide-react"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Bar, LineChart } from "recharts"
 import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Activity, AlertTriangle, CheckCircle, Database, Eye, RefreshCw, Server, TrendingUp, Zap } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-interface HealthStatus {
-  status: "healthy" | "degraded" | "unhealthy"
-  service: string
-  version: string
-  models: {
-    vision: string
-    embedding: string
-  }
-  ollama: {
-    url: string
-    healthy: boolean
-  }
-  timestamp: string
+// Mock Data
+const apiCallData = [
+  { hour: "00:00", success: 120, error: 5 },
+  { hour: "01:00", success: 110, error: 3 },
+  { hour: "02:00", success: 90, error: 2 },
+  { hour: "03:00", success: 130, error: 7 },
+  { hour: "04:00", success: 150, error: 4 },
+  { hour: "05:00", success: 140, error: 6 },
+  { hour: "06:00", success: 160, error: 8 },
+  { hour: "07:00", success: 180, error: 10 },
+  { hour: "08:00", success: 200, error: 12 },
+  { hour: "09:00", success: 220, error: 15 },
+  { hour: "10:00", success: 250, error: 18 },
+  { hour: "11:00", success: 230, error: 14 },
+]
+
+const modelLatencyData = [
+  { hour: "00:00", latency: 1500 },
+  { hour: "01:00", latency: 1450 },
+  { hour: "02:00", latency: 1600 },
+  { hour: "03:00", latency: 1550 },
+  { hour: "04:00", latency: 1700 },
+  { hour: "05:00", latency: 1650 },
+  { hour: "06:00", latency: 1800 },
+  { hour: "07:00", latency: 1750 },
+  { hour: "08:00", latency: 1900 },
+  { hour: "09:00", latency: 1850 },
+  { hour: "10:00", latency: 2000 },
+  { hour: "11:00", latency: 1950 },
+]
+
+const resourceUtilization = {
+  cpu: 75,
+  memory: 60,
+  disk: 85,
 }
 
-interface MetricData {
-  name: string
-  value: number
-  unit: string
-  status: "good" | "warning" | "critical"
-  trend: "up" | "down" | "stable"
-}
+const chartConfig = {
+  success: {
+    label: "Success",
+    color: "hsl(var(--chart-1))",
+  },
+  error: {
+    label: "Error",
+    color: "hsl(var(--chart-2))",
+  },
+  latency: {
+    label: "Latency (ms)",
+    color: "hsl(var(--chart-3))",
+  },
+} as const
 
 export function OllamaMonitoringDashboard() {
-  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
-  const [metrics, setMetrics] = useState<MetricData[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchHealthStatus = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch("/api/ai/v1/assess", {
-        method: "GET",
-      })
-
-      const data = await response.json()
-      setHealthStatus(data)
-      setLastUpdate(new Date())
-
-      // Generate mock metrics for demonstration
-      const mockMetrics: MetricData[] = [
-        {
-          name: "Vision Model Latency",
-          value: Math.random() * 2000 + 500,
-          unit: "ms",
-          status: Math.random() > 0.7 ? "warning" : "good",
-          trend: Math.random() > 0.5 ? "up" : "down",
-        },
-        {
-          name: "Embedding Latency",
-          value: Math.random() * 1000 + 200,
-          unit: "ms",
-          status: Math.random() > 0.8 ? "critical" : "good",
-          trend: "stable",
-        },
-        {
-          name: "Assessment Confidence",
-          value: Math.random() * 0.3 + 0.7,
-          unit: "%",
-          status: "good",
-          trend: "up",
-        },
-        {
-          name: "Success Rate",
-          value: Math.random() * 0.1 + 0.9,
-          unit: "%",
-          status: "good",
-          trend: "stable",
-        },
-        {
-          name: "Queue Depth",
-          value: Math.floor(Math.random() * 10),
-          unit: "requests",
-          status: Math.random() > 0.6 ? "warning" : "good",
-          trend: "down",
-        },
-        {
-          name: "Memory Usage",
-          value: Math.random() * 0.4 + 0.4,
-          unit: "%",
-          status: Math.random() > 0.7 ? "warning" : "good",
-          trend: "up",
-        },
-      ]
-
-      setMetrics(mockMetrics)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch health status")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const [activeTab, setActiveTab] = useState("overview")
+  const [systemHealth, setSystemHealth] = useState<"healthy" | "warning" | "critical">("healthy")
+  const [lastUpdated, setLastUpdated] = useState(new Date())
 
   useEffect(() => {
-    fetchHealthStatus()
+    // Simulate real-time updates
+    const interval = setInterval(() => {
+      setLastUpdated(new Date())
+      // Randomly change health status for demo
+      const rand = Math.random()
+      if (rand < 0.1) {
+        setSystemHealth("critical")
+      } else if (rand < 0.3) {
+        setSystemHealth("warning")
+      } else {
+        setSystemHealth("healthy")
+      }
+    }, 5000) // Update every 5 seconds
 
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchHealthStatus, 30000)
     return () => clearInterval(interval)
   }, [])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getHealthBadgeColor = () => {
+    switch (systemHealth) {
       case "healthy":
-      case "good":
-        return "text-green-600 bg-green-100"
-      case "degraded":
+        return "bg-green-500"
       case "warning":
-        return "text-yellow-600 bg-yellow-100"
-      case "unhealthy":
+        return "bg-yellow-500"
       case "critical":
-        return "text-red-600 bg-red-100"
+        return "bg-red-500"
       default:
-        return "text-gray-600 bg-gray-100"
+        return "bg-gray-500"
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+  const getHealthMessage = () => {
+    switch (systemHealth) {
       case "healthy":
-      case "good":
-        return <CheckCircle className="h-4 w-4" />
-      case "degraded":
+        return "All systems operational."
       case "warning":
-        return <AlertTriangle className="h-4 w-4" />
-      case "unhealthy":
+        return "Minor issues detected. Monitoring closely."
       case "critical":
-        return <AlertTriangle className="h-4 w-4" />
+        return "Critical issues detected. Immediate attention required!"
       default:
-        return <Server className="h-4 w-4" />
+        return "Unknown status."
     }
-  }
-
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case "up":
-        return <TrendingUp className="h-3 w-3 text-green-600" />
-      case "down":
-        return <TrendingUp className="h-3 w-3 text-red-600 rotate-180" />
-      default:
-        return <Activity className="h-3 w-3 text-gray-600" />
-    }
-  }
-
-  const formatValue = (value: number, unit: string) => {
-    if (unit === "%") {
-      return `${Math.round(value * 100)}%`
-    }
-    if (unit === "ms") {
-      return `${Math.round(value)}ms`
-    }
-    return `${Math.round(value)} ${unit}`
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Ollama Monitoring Dashboard</h2>
-          <p className="text-muted-foreground">Real-time monitoring of AI vision and embedding services</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {lastUpdate && (
-            <span className="text-sm text-muted-foreground">Last updated: {lastUpdate.toLocaleTimeString()}</span>
-          )}
-          <Button variant="outline" size="sm" onClick={fetchHealthStatus} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold">Ollama Monitoring Dashboard</h2>
+      <p className="text-muted-foreground">
+        Monitor the performance and health of your Ollama AI services and related APIs.
+      </p>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" /> Overview
+          </TabsTrigger>
+          <TabsTrigger value="api-metrics" className="flex items-center gap-2">
+            <LucideBarChart className="h-4 w-4" /> API Metrics
+          </TabsTrigger>
+          <TabsTrigger value="resource-usage" className="flex items-center gap-2">
+            <Server className="h-4 w-4" /> Resources
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Service Status */}
-      {healthStatus && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Server className="h-5 w-5" />
-              Service Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Overall Status</span>
-                  <Badge className={getStatusColor(healthStatus.status)}>
-                    {getStatusIcon(healthStatus.status)}
-                    <span className="ml-1 capitalize">{healthStatus.status}</span>
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Service Version</span>
-                  <Badge variant="outline">{healthStatus.version}</Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Ollama Connection</span>
-                  <Badge className={getStatusColor(healthStatus.ollama.healthy ? "good" : "critical")}>
-                    {getStatusIcon(healthStatus.ollama.healthy ? "good" : "critical")}
-                    <span className="ml-1">{healthStatus.ollama.healthy ? "Connected" : "Disconnected"}</span>
-                  </Badge>
-                </div>
+        <TabsContent value="overview" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Health Overview</CardTitle>
+              <p className="text-sm text-muted-foreground">Last updated: {lastUpdated.toLocaleTimeString()}</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full ${getHealthBadgeColor()}`} />
+                <span className="font-semibold text-lg">{getHealthMessage()}</span>
               </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium flex items-center gap-2">
-                    <Eye className="h-4 w-4" />
-                    Vision Model
-                  </span>
-                  <Badge variant="outline">{healthStatus.models.vision}</Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium flex items-center gap-2">
-                    <Database className="h-4 w-4" />
-                    Embedding Model
-                  </span>
-                  <Badge variant="outline">{healthStatus.models.embedding}</Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Ollama URL</span>
-                  <span className="text-sm font-mono text-muted-foreground">{healthStatus.ollama.url}</span>
-                </div>
+              {systemHealth === "warning" && (
+                <Alert className="bg-yellow-50 border-yellow-200 text-yellow-700">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Warning</AlertTitle>
+                  <AlertDescription>High error rates detected in AI assessment API.</AlertDescription>
+                </Alert>
+              )}
+              {systemHealth === "critical" && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Critical Alert!</AlertTitle>
+                  <AlertDescription>Ollama service is unresponsive. Check server status.</AlertDescription>
+                </Alert>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <LucideBarChart className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="text-sm text-muted-foreground">Total API Calls (Last 24h)</div>
+                        <div className="text-2xl font-bold">
+                          {apiCallData.reduce((sum, d) => sum + d.success + d.error, 0)}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <LucideLineChart className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <div className="text-sm text-muted-foreground">Avg. Model Latency (Last 24h)</div>
+                        <div className="text-2xl font-bold">
+                          {(modelLatencyData.reduce((sum, d) => sum + d.latency, 0) / modelLatencyData.length).toFixed(
+                            0,
+                          )}{" "}
+                          ms
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Performance Metrics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Performance Metrics
-          </CardTitle>
-          <CardDescription>Key performance indicators for AI processing pipeline</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {metrics.map((metric, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{metric.name}</span>
-                  <div className="flex items-center gap-1">
-                    {getTrendIcon(metric.trend)}
-                    <Badge variant="outline" className={`text-xs ${getStatusColor(metric.status)}`}>
-                      {metric.status}
-                    </Badge>
+        <TabsContent value="api-metrics" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>API Call Volume & Errors</CardTitle>
+              <CardDescription>Hourly breakdown of successful and error API calls.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <Bar data={apiCallData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="hour" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    <Bar dataKey="success" fill="var(--color-success)" radius={4} />
+                    <Bar dataKey="error" fill="var(--color-error)" radius={4} />
+                  </Bar>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Latency</CardTitle>
+              <CardDescription>Average response time of AI models per hour.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={modelLatencyData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="hour" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis dataKey="latency" tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    <Line dataKey="latency" type="monotone" stroke="var(--color-latency)" strokeWidth={2} dot={true} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resource-usage" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Server Resource Utilization</CardTitle>
+              <CardDescription>Current CPU, Memory, and Disk usage of the Ollama server.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                    <span>CPU Usage</span>
+                    <span>{resourceUtilization.cpu}%</span>
                   </div>
+                  <Progress value={resourceUtilization.cpu} className="h-2" />
                 </div>
-
-                <div className="text-2xl font-bold">{formatValue(metric.value, metric.unit)}</div>
-
-                {metric.unit === "%" && <Progress value={metric.value * 100} className="h-2" />}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* System Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            System Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <h4 className="font-semibold">Configuration</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Max Parallel Requests:</span>
-                  <span className="font-mono">4</span>
+                <div>
+                  <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                    <span>Memory Usage</span>
+                    <span>{resourceUtilization.memory}%</span>
+                  </div>
+                  <Progress value={resourceUtilization.memory} className="h-2" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Max Loaded Models:</span>
-                  <span className="font-mono">2</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Flash Attention:</span>
-                  <Badge variant="secondary">Enabled</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Request Timeout:</span>
-                  <span className="font-mono">30s</span>
+                <div>
+                  <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                    <span>Disk Usage</span>
+                    <span>{resourceUtilization.disk}%</span>
+                  </div>
+                  <Progress value={resourceUtilization.disk} className="h-2" />
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-semibold">Alert Thresholds</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Vision Latency:</span>
-                  <span className="font-mono">&gt; 2000ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Embedding Latency:</span>
-                  <span className="font-mono">&gt; 1000ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Low Confidence:</span>
-                  <span className="font-mono">&lt; 60%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Failure Rate:</span>
-                  <span className="font-mono">&gt; 5%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span>Updating metrics...</span>
-          </div>
-        </div>
-      )}
+              <Alert className="bg-blue-50 border-blue-200 text-blue-700">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Note</AlertTitle>
+                <AlertDescription>
+                  These metrics are simulated. In a production environment, integrate with actual server monitoring
+                  tools.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

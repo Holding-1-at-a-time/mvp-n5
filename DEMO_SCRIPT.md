@@ -1,302 +1,139 @@
-# Slick Solutions - Live Demo Script
+# Slick Solutions Demo Script
 
-**Duration**: 10-15 minutes  
-**Audience**: Stakeholders, investors, potential customers  
-**Goal**: Showcase end-to-end vehicle inspection workflow with AI integration
+## Scenario: Vehicle Inspection & Repair Workflow
 
-## 🎯 Demo Overview
-
-This demo showcases a complete vehicle inspection workflow from initial photo capture through AI-powered damage assessment to final estimate generation and scheduling.
-
-### Key Features Demonstrated
-
-1. **VIN Scanning & Vehicle Recognition**
-2. **AI-Powered Damage Detection**
-3. **Real-time Processing & Streaming**
-4. **Automated Cost Estimation**
-5. **Approval & Scheduling Workflow**
-6. **API Integration & Monitoring**
+**Goal:** Showcase the AI-powered vehicle inspection, dynamic pricing, and repair management capabilities.
 
 ---
 
-## 📋 Pre-Demo Checklist
+### 1. Home Page & New Inspection (Client/Customer Flow)
 
-### Technical Setup (5 minutes before demo)
+**Action:** Start from the Home Page.
+**Narrative:** "Welcome to Slick Solutions! This is our main portal where customers can initiate a new vehicle inspection or track existing ones, and shop owners can manage their operations."
 
-- [ ] **Environment**: Ensure demo environment is running
-- [ ] **Test Data**: Load sample vehicle data and images
-- [ ] **Network**: Verify stable internet connection
-- [ ] **Backup**: Have screenshots ready for fallback
-- [ ] **Mobile Device**: Charged phone/tablet for camera demo
-- [ ] **Screen Share**: Test screen sharing and audio
+**Action:** Click on "Media Upload" card.
+**Narrative:** "Let's start a new inspection. Our system guides the customer through capturing high-quality photos of their vehicle."
 
-### Demo Assets Prepared
+**Action:** On "New Inspection" page (`/inspect/new`):
+*   **Capture 4 photos:** Click the camera button multiple times.
+*   **Scan VIN:** Click the "Scan VIN" button.
+**Narrative:** "The customer uses their phone's camera to capture photos from various angles. Our AI provides real-time guidance for optimal photo quality. We also quickly scan the VIN for accurate vehicle identification."
+*(Observe the photo count update and VIN appearing.)*
 
-- [ ] **Sample VIN**: `1HGBH41JXMN109186` (2020 Honda Civic)
-- [ ] **Test Images**: Front, rear, side damage photos ready
-- [ ] **Video File**: 30-second vehicle walkround video
-- [ ] **Monitoring Dashboard**: Metrics and alerts visible
-
----
-
-## 🎬 Demo Script
-
-### Opening (1 minute)
-
-> "Good [morning/afternoon] everyone. Today I'm excited to show you Slick Solutions - our AI-powered vehicle inspection platform that's revolutionizing how automotive damage assessment works.
-> 
-> In the next 10 minutes, you'll see how we've transformed a process that traditionally takes hours into something that happens in real-time, with greater accuracy and consistency than human inspectors alone."
-
-**Screen**: Show landing page with clean, professional interface
+**Action:** Click "Proceed to Analysis".
+**Narrative:** "Once the necessary photos and VIN are captured, the data is sent to our powerful AI for analysis."
 
 ---
 
-### Act 1: Vehicle Identification (2 minutes)
+### 2. Inspection Status & Assessment (Client/Customer Flow)
 
-#### VIN Scanning Demo
+**Action:** On "Inspection Status" page (`/inspect/[id]`):
+*   Observe the progress bar and status updates.
+**Narrative:** "The system is now processing the images and running the AI damage detection. This usually takes a few moments, and the customer is kept informed of the progress."
+*(Wait for the page to automatically redirect.)*
 
-> "Let's start with a real vehicle inspection. The first step is identifying the vehicle, and we make this incredibly simple."
+**Action:** On "Assessment Results" page (`/assessment`):
+*   Click on a few damage hotspots on the vehicle silhouette.
+*   Toggle the sidebar.
+**Narrative:** "Here are the AI-detected damages! The customer can see an interactive map of their vehicle with hotspots indicating damage. Clicking a hotspot reveals detailed information, including type, severity, location, and an initial estimated cost. The sidebar provides a quick overview of all detected issues."
 
-**Action**: Navigate to `/inspect/new`
-
-> "Our inspector can either scan the VIN barcode directly..."
-
-**Action**: 
-1. Click "Scan VIN Barcode"
-2. Show camera interface with guide overlay
-3. Demonstrate barcode scanning (use prepared barcode image)
-
-> "...or enter it manually for maximum flexibility."
-
-**Action**:
-1. Switch to manual entry
-2. Type: `1HGBH41JXMN109186`
-3. Click "Decode VIN"
-
-#### Vehicle Recognition
-
-> "Watch what happens next - we instantly connect to the NHTSA database to pull complete vehicle specifications."
-
-**Expected Result**: Vehicle info populates:
-- 2020 Honda Civic
-- 4-door sedan
-- 1.5L 4-cylinder
-- Front-wheel drive
-
-> "This isn't just basic info - we're pulling 15+ data points that directly impact our pricing algorithms. The system knows this is a newer vehicle with specific trim requirements, which affects everything from labor rates to parts costs."
+**Action:** Click "Edit Estimate".
+**Narrative:** "The customer can then proceed to review and edit the estimate, or the shop can do this on their behalf."
 
 ---
 
-### Act 2: Damage Capture & AI Processing (3 minutes)
+### 3. Edit Estimate (Client/Customer or Admin Flow)
 
-#### Photo Capture
+**Action:** On "Edit Estimate" page (`/estimate`):
+*   **Add a new service:** Use the "Search services" input or "Quick Add" buttons.
+*   **Change quantity/price:** Edit an existing item's quantity or unit price.
+*   **Remove an item:** Click the trash icon.
+**Narrative:** "This is where the estimate becomes fully customizable. We can add new services, adjust quantities, modify prices, or remove items as needed. The totals update in real-time."
 
-> "Now for the magic - damage detection. Our mobile interface guides inspectors through optimal photo capture."
-
-**Action**:
-1. Show camera interface with guide frame
-2. Capture 3-4 photos of vehicle damage
-3. Show thumbnail strip building up
-
-> "Notice the real-time guidance - the system ensures consistent photo quality and angles for optimal AI processing."
-
-#### AI Processing Demo
-
-> "Here's where our AI takes over. Watch the processing happen in real-time."
-
-**Action**:
-1. Click "Proceed to Analysis"
-2. Show processing screen with progress indicators
-3. Highlight streaming updates
-
-> "Our V2 API supports both batch processing and real-time streaming. For this demo, you're seeing partial results as they're detected - this is crucial for mobile inspectors who need immediate feedback."
-
-#### Damage Detection Results
-
-**Expected Results**: 
-- Front bumper scratch (85% confidence)
-- Driver door dent (92% confidence)
-- Rear quarter panel paint damage (78% confidence)
-
-> "Each damage is detected with a confidence score, precise location mapping, and severity assessment. Our AI has been trained on thousands of vehicle damage patterns and achieves 94% accuracy in controlled tests."
+**Action:** Click "Approve & Schedule".
+**Narrative:** "Once the estimate is finalized, the customer can approve it and proceed to schedule their appointment."
 
 ---
 
-### Act 3: Intelligent Estimation (2 minutes)
+### 4. Schedule Appointment & Invoice (Client/Customer Flow)
 
-#### Cost Calculation
+**Action:** On "Schedule Appointment" page (`/schedule`):
+*   Select an AI-recommended time slot.
+**Narrative:** "Our smart scheduling system suggests optimal appointment times based on shop availability and workload. AI-recommended slots are highlighted for convenience."
 
-> "Now watch how vehicle specifications drive intelligent pricing."
+**Action:** Click "Confirm & Pay".
+**Narrative:** "With the appointment selected, the customer is ready to confirm and proceed to payment."
 
-**Action**: Show estimate breakdown screen
-
-> "The system isn't just applying generic rates - it's factoring in that this is a 2020 Honda Civic with specific trim requirements. The front-wheel drive configuration affects undercarriage access, the 4-cylinder engine impacts engine bay work, and the vehicle age triggers our premium service protocols."
-
-**Expected Estimate**:
-- Front bumper scratch: $285 (2.5 hours labor)
-- Driver door dent: $520 (3.5 hours labor)  
-- Paint damage: $340 (2 hours labor)
-- **Total**: $1,145
-
-#### Pricing Intelligence
-
-> "Here's what makes this powerful - traditional estimates are often 30-40% off because they don't account for vehicle-specific factors. Our system automatically applies:
-> - Age-based pricing (10% premium for vehicles under 3 years)
-> - Size adjustments (30% increase for trucks/SUVs)
-> - Complexity factors (15% more for AWD vehicles)
-> - Specialty handling (25% increase for electric/hybrid)"
+**Action:** On "Invoice & Payment" page (`/invoice`):
+*   Observe the invoice details.
+*   Click "Pay Invoice" (optional, for demo purposes).
+**Narrative:** "Finally, a professional invoice is generated, detailing all services and costs. Customers can easily pay online, and the appointment is confirmed."
 
 ---
 
-### Act 4: Workflow & Integration (2 minutes)
+### 5. Shop Dashboard (Admin/Shop Owner Flow)
 
-#### Approval Process
+**Action:** Navigate back to the Home Page and click "Dashboard".
+**Narrative:** "Now, let's switch hats to the shop owner's perspective. The dashboard provides a comprehensive overview of daily operations."
 
-> "The estimate flows directly into our approval workflow."
-
-**Action**: 
-1. Show estimate approval screen
-2. Demonstrate "Approve & Schedule" button
-3. Show scheduling interface
-
-> "Customers can approve estimates digitally, and the system immediately triggers scheduling workflows. This eliminates the back-and-forth that typically adds days to the process."
-
-#### API & Integration Demo
-
-> "Behind the scenes, this is all happening through our versioned APIs."
-
-**Action**: 
-1. Show API documentation at `/api/v2/inspect/schema`
-2. Highlight webhook notifications
-3. Show monitoring dashboard
-
-> "Our V2 API supports video processing, real-time streaming, and webhook notifications. Partners can integrate directly with their existing systems, and we provide complete observability into every transaction."
+**Action:** On "Shop Dashboard" page (`/dashboard`):
+*   Browse through the tabs: "Inspections", "Schedule", "Payments", "Analytics".
+**Narrative:** "From here, shop owners can track pending inspections, view upcoming jobs, monitor payment statuses, and gain insights from analytics. It's a centralized hub for managing the business."
 
 ---
 
-### Act 5: Monitoring & Reliability (1 minute)
+### 6. Dynamic Pricing System (Admin/Shop Owner Flow)
 
-#### Real-time Monitoring
+**Action:** Navigate back to the Home Page and click "Pricing".
+**Narrative:** "One of our most powerful features is the Dynamic Pricing System. This allows shop owners to configure how estimates are calculated, adapting to various factors."
 
-> "Finally, let me show you our monitoring capabilities."
+**Action:** On "Dynamic Pricing System" page (`/pricing`):
+*   Go to the "Pricing Dashboard" tab.
+*   Adjust a setting (e.g., "Labor Rate" or "Skill Markup").
+*   Observe the "Live Preview" on the right.
+**Narrative:** "In the Pricing Dashboard, shop owners can fine-tune parameters like labor rates, skill markups, and even membership discounts. The 'Live Preview' instantly shows how these changes impact a sample estimate, allowing for real-time optimization."
 
-**Action**: Show observability dashboard
-
-> "We track everything in real-time:
-> - API response times (currently averaging 340ms)
-> - AI confidence scores (94% average)
-> - Processing success rates (99.2% uptime)
-> - Alert thresholds with automatic escalation"
-
-**Highlight**: Show alert configuration:
-- Embedding latency > 500ms → Slack warning
-- Workflow failure rate > 5% → PagerDuty critical
+**Action:** Click "Save Changes" (if any changes were made).
+**Narrative:** "Changes can be saved to apply the new pricing rules across the system."
 
 ---
 
-## 🎯 Closing (1 minute)
+### 7. Knowledge Base, API Docs, Monitoring (Admin/Developer Flow)
 
-> "What you've just seen represents a complete transformation of vehicle inspection:
-> 
-> ✅ **Speed**: 10-minute inspections vs. 2-hour traditional process  
-> ✅ **Accuracy**: 94% AI accuracy vs. 60-70% human consistency  
-> ✅ **Cost**: 40% reduction in processing costs  
-> ✅ **Scale**: Handle 10x more inspections with same staff  
-> 
-> We're not just digitizing an old process - we're reimagining what's possible when you combine AI, mobile technology, and intelligent workflows.
-> 
-> The system you've seen is running in production today, processing real inspections for our pilot customers. We're ready to scale."
+**Action:** Navigate back to the Home Page and click "Knowledge".
+**Narrative:** "For advanced users, we also provide a Knowledge Base, which leverages RAG to store and retrieve information relevant to vehicle repairs and past assessments."
+
+**Action:** Navigate back to the Home Page and click "API Docs".
+**Narrative:** "Developers can access comprehensive API documentation for integrating with our system."
+
+**Action:** Navigate back to the Home Page and click "Monitoring".
+**Narrative:** "And for system administrators, a monitoring dashboard provides insights into the health and performance of the AI and backend services."
 
 ---
 
-## 🛠️ Troubleshooting Guide
+**End of Demo.**
+\`\`\`
 
-### Common Demo Issues
-
-#### Camera Not Working
-- **Fallback**: Use pre-captured images
-- **Script**: "For demo purposes, I'll use pre-captured images, but in production this would be live camera capture"
-
-#### API Timeout
-- **Fallback**: Show cached results
-- **Script**: "I'm showing cached results here, but normally this processes in real-time"
-
-#### VIN Decode Failure
-- **Fallback**: Use manual vehicle entry
-- **Script**: "Let me manually enter the vehicle details to keep the demo moving"
-
-#### Slow Processing
-- **Script**: "Processing times vary based on image complexity - this one has particularly detailed damage patterns"
-
-### Recovery Phrases
-
-- "Let me show you the expected result while this processes..."
-- "In production, this typically completes in under 30 seconds..."
-- "I have a backup example that demonstrates the same functionality..."
-
----
-
-## 📊 Demo Metrics to Highlight
-
-### Performance Numbers
-- **Processing Time**: < 30 seconds average
-- **API Response**: < 500ms average
-- **Uptime**: 99.2% availability
-- **Accuracy**: 94% damage detection accuracy
-
-### Business Impact
-- **Time Savings**: 80% reduction in inspection time
-- **Cost Reduction**: 40% lower processing costs
-- **Accuracy Improvement**: 30% more consistent estimates
-- **Customer Satisfaction**: 95% approval rating
-
-### Technical Capabilities
-- **Concurrent Processing**: 100+ simultaneous inspections
-- **File Support**: Images, videos up to 50MB
-- **API Versions**: v1 (stable), v2 (enhanced features)
-- **Integration**: RESTful APIs, webhooks, real-time streaming
-
----
-
-## 🎤 Q&A Preparation
-
-### Likely Questions & Answers
-
-**Q: "How accurate is the AI compared to human inspectors?"**
-A: "Our AI achieves 94% accuracy in controlled tests, compared to 60-70% consistency among human inspectors. More importantly, it's consistent - the same damage will always get the same assessment, eliminating human variability."
-
-**Q: "What happens if the AI misses damage?"**
-A: "We have multiple safeguards: confidence thresholds, human review workflows for low-confidence detections, and continuous learning from inspector feedback. The system gets smarter with every inspection."
-
-**Q: "How do you handle different vehicle types?"**
-A: "Our VIN integration pulls 15+ vehicle specifications that directly influence damage assessment and pricing. We've trained on data from all major manufacturers and body styles."
-
-**Q: "What's your data security approach?"**
-A: "End-to-end encryption, GDPR compliance, and complete audit trails. Images are processed and then securely stored or deleted based on customer preferences."
-
-**Q: "How quickly can this integrate with existing systems?"**
-A: "Our RESTful APIs can integrate in days, not months. We provide comprehensive documentation, SDKs, and webhook support for real-time notifications."
-
----
-
-## 📈 Success Metrics
-
-### Demo Success Indicators
-- [ ] Complete workflow demonstrated (VIN → Photos → AI → Estimate → Approval)
-- [ ] AI processing completed successfully
-- [ ] Audience engagement (questions, positive reactions)
-- [ ] Technical capabilities clearly communicated
-- [ ] Business value articulated with specific metrics
-
-### Follow-up Actions
-- [ ] Share demo recording and documentation
-- [ ] Schedule technical deep-dive sessions
-- [ ] Provide API access for evaluation
-- [ ] Set up pilot program discussions
-
----
-
-**Demo Prepared By**: [Your Name]  
-**Last Updated**: [Date]  
-**Version**: 1.0  
-**Next Review**: [Date + 1 month]
+```plaintext file=".env.example"
+# Convex
+NEXT_PUBLIC_CONVEX_URL=
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+# Svix
+SVIX_API_KEY=
+SVIX_ENV_ID=
+# Slack
+SLACK_WEBHOOK_URL=
+# Ollama (for local AI models)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_VISION_MODEL=llava:7b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+# Sentry
+SENTRY_ORG=
+SENTRY_PROJECT=
+SENTRY_DSN=
+SENTRY_AUTH_TOKEN=
+# Vercel
+VERCEL_GIT_COMMIT_SHA=
+NEXT_PUBLIC_APP_URL=

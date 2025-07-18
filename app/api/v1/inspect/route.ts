@@ -1,46 +1,32 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { api } from "@/convex/_generated/api"
 import { ConvexHttpClient } from "convex/browser"
+import { api } from "@/convex/_generated/api"
+import { env } from "@/lib/env"
+import { trackApiCall } from "@/lib/observability"
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL!)
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
+  const startTime = Date.now()
+  let status = "success"
+  let errorMessage = ""
+
   try {
-    const formData = await request.formData()
-    const vinNumber = formData.get("vinNumber") as string
+    const { vinNumber, imageUrls } = await req.json()
 
-    if (!vinNumber) {
-      return NextResponse.json({ error: "VIN number is required" }, { status: 400 })
+    if (!vinNumber || !imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+      status = "bad_request"
+      errorMessage = "Missing vinNumber or imageUrls in request body."
+      return NextResponse.json({ error: errorMessage }, { status: 400 })
     }
 
-    // Extract images from form data
-    const images: File[] = []
-    for (const [key, value] of formData.entries()) {
-      if (key.startsWith("image_") && value instanceof File) {
-        images.push(value)
-      }
-    }
+    // In a real application, you would likely upload images to Convex storage here
+    // and get their storage IDs before creating the inspection record.
+    // For this example, we'll assume imageUrls are already accessible by Convex.
 
-    if (images.length < 3) {
-      return NextResponse.json({ error: "At least 3 images are required" }, { status: 400 })
-    }
-
-    // Upload images to Convex File Storage
-    const imageIds: string[] = []
-    for (const image of images) {
-      const arrayBuffer = await image.arrayBuffer()
-      const storageId = await convex.mutation(api.files.uploadImage, {
-        data: Array.from(new Uint8Array(arrayBuffer)),
-        contentType: image.type,
-        filename: image.name,
-      })
-      imageIds.push(storageId)
-    }
-
-    // Create inspection record
     const inspectionId = await convex.mutation(api.inspections.create, {
       vinNumber,
-      imageIds,
+      imageUrls, // Storing URLs directly for simplicity in this API route
       status: "pending",
       createdAt: Date.now(),
     })
@@ -51,11 +37,53 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
+      success: true,
       inspectionId,
       status: "pending",
+      message: "Inspection created and processing initiated.",
     })
-  } catch (error) {
-    console.error("Failed to create inspection:", error)
-    return NextResponse.json({ error: "Failed to create inspection" }, { status: 500 })
+  } catch (error: any) {
+    console.error("API V1 inspect failed:", error)
+    status = "error"
+    errorMessage = error.message || "Internal server error during inspection creation."
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
+  } finally {
+    trackApiCall("api_v1_inspect", Date.now() - startTime, status, errorMessage)
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const startTime = Date.now()
+  let status = "success"
+  let errorMessage = ""
+
+  try {
+    const { searchParams } = new URL(req.url)
+    const inspectionId = searchParams.get("id")
+
+    if (!inspectionId) {
+      status = "bad_request"
+      errorMessage = "Missing inspection ID."
+      return NextResponse.json({ error: errorMessage }, { status: 400 })
+    }
+
+    const inspection = await convex.query(api.inspections.get, {
+      id: inspectionId as any, // Cast to any because Id&lt;"inspections"> is not directly available here
+    })
+
+    if (!inspection) {
+      status = "not_found"
+      errorMessage = "Inspection not found."
+      return NextResponse.json({ error: errorMessage }, { status: 404 })
+    }
+
+    return NextResponse.json(inspection)
+  } catch (error: any) {
+    console.error("API V1 inspect GET failed:", error)
+    status = "error"
+    errorMessage = error.message || "Internal server error during inspection retrieval."
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
+  } finally {
+    trackApiCall("api_v1_inspect_get", Date.now() - startTime, status, errorMessage)
   }
 }

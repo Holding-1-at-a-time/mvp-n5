@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/ollama": "latest",
     "@ai-sdk/provider": "latest",
     "@auth0/auth0-react": "latest",
     "@clerk/clerk-react": "latest",
@@ -46,8 +47,10 @@
     "@radix-ui/react-tooltip": "latest",
     "@sentry/nextjs": "latest",
     "@sentry/node": "latest",
+    "@t3-oss/env-nextjs": "latest",
     "@zxing/library": "latest",
     "ai": "latest",
+    "arktype": "latest",
     "autoprefixer": "^10.4.20",
     "buffer": "latest",
     "child_process": "latest",
@@ -60,6 +63,7 @@
     "embla-carousel-react": "latest",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
+    "mermaid": "latest",
     "next": "15.2.4",
     "next-themes": "latest",
     "node-fetch": "latest",
@@ -72,6 +76,7 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "valibot": "latest",
     "vaul": "latest",
     "zod": "latest"
   },

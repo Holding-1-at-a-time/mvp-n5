@@ -1,259 +1,229 @@
 "use client"
 
+import { CardDescription } from "@/components/ui/card"
+
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useQuery, useMutation } from "convex/react"
+import { Loader2, Plus, Trash2, FileText, Brain, MessageSquare, XCircle } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import { Search, Plus, Trash2, Database, TrendingUp } from "lucide-react"
+import type { Id } from "@/convex/_generated/dataModel"
 
 interface RagDashboardProps {
-  shopId: string
+  shopId: string // To filter knowledge base by shop
 }
 
 export function RagDashboard({ shopId }: RagDashboardProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [newProcedure, setNewProcedure] = useState({
-    title: "",
-    content: "",
-    category: "",
-    tags: "",
-  })
+  const [activeTab, setActiveTab] = useState("manage")
+  const [newDocumentContent, setNewDocumentContent] = useState("")
+  const [newDocumentTitle, setNewDocumentTitle] = useState("")
+  const [query, setQuery] = useState("")
+  const [queryResult, setQueryResult] = useState<string | null>(null)
+  const [queryLoading, setQueryLoading] = useState(false)
+  const [queryError, setQueryError] = useState<string | null>(null)
 
-  // Queries
-  const knowledgeStats = useQuery(api.ragIntegration.getKnowledgeStats, { shopId })
+  const documents = useQuery(api.ragIntegration.listDocuments, { shopId })
+  const addDocument = useMutation(api.ragIntegration.addDocument)
+  const deleteDocument = useMutation(api.ragIntegration.deleteDocument)
+  const queryRag = useMutation(api.ragIntegration.queryRag)
 
-  // Mutations
-  const addProcedure = useMutation(api.ragIntegration.addServiceProcedureToRag)
-  const cleanupOld = useMutation(api.ragIntegration.cleanupOldEntries)
-
-  const handleAddProcedure = async () => {
-    if (!newProcedure.title || !newProcedure.content) return
-
+  const handleAddDocument = async () => {
+    if (!newDocumentContent || !newDocumentTitle) {
+      alert("Please provide both title and content for the document.")
+      return
+    }
     try {
-      await addProcedure({
+      await addDocument({
         shopId,
-        title: newProcedure.title,
-        content: newProcedure.content,
-        category: newProcedure.category || "general",
-        tags: newProcedure.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
+        title: newDocumentTitle,
+        content: newDocumentContent,
       })
-
-      setNewProcedure({ title: "", content: "", category: "", tags: "" })
-    } catch (error) {
-      console.error("Failed to add procedure:", error)
+      setNewDocumentTitle("")
+      setNewDocumentContent("")
+      alert("Document added and indexed successfully!")
+    } catch (error: any) {
+      alert(`Failed to add document: ${error.message}`)
     }
   }
 
-  const handleCleanup = async () => {
-    try {
-      await cleanupOld({
-        shopId,
-        olderThanDays: 90, // Clean up entries older than 90 days
-      })
-    } catch (error) {
-      console.error("Failed to cleanup old entries:", error)
+  const handleDeleteDocument = async (id: Id<"knowledgeBase">) => {
+    if (confirm("Are you sure you want to delete this document?")) {
+      try {
+        await deleteDocument({ id })
+        alert("Document deleted successfully!")
+      } catch (error: any) {
+        alert(`Failed to delete document: ${error.message}`)
+      }
     }
   }
 
-  if (!knowledgeStats) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span>Loading RAG dashboard...</span>
-          </div>
-        </CardContent>
-      </Card>
-    )
+  const handleQueryRag = async () => {
+    if (!query) {
+      setQueryError("Please enter a query.")
+      return
+    }
+    setQueryLoading(true)
+    setQueryError(null)
+    setQueryResult(null)
+    try {
+      const result = await queryRag({ shopId, query })
+      setQueryResult(result)
+    } catch (error: any) {
+      setQueryError(`Failed to query knowledge base: ${error.message}`)
+    } finally {
+      setQueryLoading(false)
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Knowledge Base & RAG Management</h2>
-          <p className="text-muted-foreground">Manage your shop's knowledge base and semantic search capabilities</p>
-        </div>
-        <Button onClick={handleCleanup} variant="outline" size="sm">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Cleanup Old Entries
-        </Button>
-      </div>
+      <h2 className="text-2xl font-bold">Knowledge Base (RAG)</h2>
+      <p className="text-muted-foreground">Manage and query your shop's knowledge base for AI-assisted insights.</p>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{knowledgeStats.totalEntries}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inspections</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{knowledgeStats.byNamespace.inspections || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Procedures</CardTitle>
-            <Search className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{knowledgeStats.byNamespace.procedures || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Knowledge Types</CardTitle>
-            <Badge variant="secondary">{Object.keys(knowledgeStats.byType).length}</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {Object.entries(knowledgeStats.byType).map(([type, count]) => (
-                <div key={type} className="flex justify-between text-sm">
-                  <span className="capitalize">{type}</span>
-                  <span>{count}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="search" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="search">Search Knowledge</TabsTrigger>
-          <TabsTrigger value="add">Add Procedure</TabsTrigger>
-          <TabsTrigger value="recent">Recent Entries</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="manage" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Manage Documents
+          </TabsTrigger>
+          <TabsTrigger value="query" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" /> Query Knowledge
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="search" className="space-y-4">
+        {/* Manage Documents Tab */}
+        <TabsContent value="manage" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Search Knowledge Base</CardTitle>
-              <CardDescription>
-                Search through your shop's accumulated knowledge using semantic similarity
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Add New Document
+              </CardTitle>
+              <CardDescription>Add new repair procedures, common issues, or service notes.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Search for procedures, past cases, or knowledge..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-                <Button>
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
-              </div>
-
-              {/* Search results would go here */}
-              <div className="text-sm text-muted-foreground">
-                Enter a search query to find relevant knowledge from your shop's history
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="add" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Service Procedure</CardTitle>
-              <CardDescription>Add new service procedures and best practices to your knowledge base</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title</label>
-                  <Input
-                    placeholder="e.g., Paint Correction for Scratches"
-                    value={newProcedure.title}
-                    onChange={(e) => setNewProcedure((prev) => ({ ...prev, title: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
-                  <Input
-                    placeholder="e.g., paint_correction, leather_care"
-                    value={newProcedure.category}
-                    onChange={(e) => setNewProcedure((prev) => ({ ...prev, category: e.target.value }))}
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <label className="text-sm font-medium">Content</label>
+                <Label htmlFor="document-title">Document Title</Label>
+                <Input
+                  id="document-title"
+                  placeholder="e.g., 'Brake Pad Replacement Guide'"
+                  value={newDocumentTitle}
+                  onChange={(e) => setNewDocumentTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="document-content">Content</Label>
                 <Textarea
-                  placeholder="Detailed procedure steps, tips, and best practices..."
-                  value={newProcedure.content}
-                  onChange={(e) => setNewProcedure((prev) => ({ ...prev, content: e.target.value }))}
+                  id="document-content"
+                  placeholder="Enter the full text of the document here..."
+                  value={newDocumentContent}
+                  onChange={(e) => setNewDocumentContent(e.target.value)}
                   rows={8}
                 />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tags (comma-separated)</label>
-                <Input
-                  placeholder="scratch, paint, correction, compound"
-                  value={newProcedure.tags}
-                  onChange={(e) => setNewProcedure((prev) => ({ ...prev, tags: e.target.value }))}
-                />
-              </div>
-
-              <Button onClick={handleAddProcedure} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Procedure to Knowledge Base
+              <Button onClick={handleAddDocument} disabled={!newDocumentContent || !newDocumentTitle}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Document
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Existing Documents ({documents?.length || 0})
+              </CardTitle>
+              <CardDescription>All documents currently in your knowledge base.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {documents && documents.length > 0 ? (
+                <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                  <div className="space-y-4">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc._id}
+                        className="flex items-center justify-between border-b pb-3 last:border-b-0 last:pb-0"
+                      >
+                        <div>
+                          <h4 className="font-medium">{doc.title}</h4>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{doc.content}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Added: {new Date(doc._creationTime).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteDocument(doc._id)}
+                          className="shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No documents in your knowledge base yet.</p>
+                  <p className="text-sm">Add new documents using the form above.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="recent" className="space-y-4">
+        {/* Query Knowledge Tab */}
+        <TabsContent value="query" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Knowledge Entries</CardTitle>
-              <CardDescription>Latest additions to your shop's knowledge base</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                Query Knowledge Base
+              </CardTitle>
+              <CardDescription>Ask questions and get answers from your shop's knowledge.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {knowledgeStats.recentEntries.map((entry, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline">{entry.metadata.type}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(entry.metadata.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm line-clamp-3">{entry.content}</p>
-                    {entry.metadata.category && (
-                      <Badge variant="secondary" className="text-xs">
-                        {entry.metadata.category}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="query-input">Your Question</Label>
+                <Textarea
+                  id="query-input"
+                  placeholder="e.g., 'How do I diagnose a P0420 code on a Honda Civic?'"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  rows={4}
+                />
               </div>
+              <Button onClick={handleQueryRag} disabled={queryLoading || !query}>
+                {queryLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {queryLoading ? "Searching..." : "Get Answer"}
+              </Button>
+
+              {queryError && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>Error: {queryError}</AlertDescription>
+                </Alert>
+              )}
+
+              {queryResult && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg">AI Answer:</h3>
+                  <Card className="bg-gray-50 dark:bg-gray-900">
+                    <CardContent className="p-4 text-sm">
+                      <p className="whitespace-pre-wrap">{queryResult}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

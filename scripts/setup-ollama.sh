@@ -16,6 +16,13 @@ fi
 
 echo "✅ Ollama is installed"
 
+# Check if Ollama is running
+if ! pgrep -x "ollama" > /dev/null; then
+  echo "Ollama is not running. Please start Ollama before running this script."
+  echo "You can download Ollama from https://ollama.ai/download"
+  exit 1
+fi
+
 # Start Ollama service (if not running)
 echo "🔄 Starting Ollama service..."
 ollama serve &
@@ -44,33 +51,33 @@ for i in {1..30}; do
 done
 
 # Download required models
-echo "📥 Downloading Llama 3.2 Vision model..."
-ollama pull llama3.2-vision:latest
+echo "📥 Downloading llava:7b model..."
+ollama pull llava:7b
 
-echo "📥 Downloading mxbai-embed-large model..."
-ollama pull mxbai-embed-large:latest
+echo "📥 Downloading nomic-embed-text model..."
+ollama pull nomic-embed-text
 
 # Verify models are installed
 echo "🔍 Verifying installed models..."
 MODELS=$(ollama list)
 
-if echo "$MODELS" | grep -q "llama3.2-vision"; then
-    echo "✅ llama3.2-vision model installed successfully"
+if echo "$MODELS" | grep -q "llava:7b"; then
+    echo "✅ llava:7b model installed successfully"
 else
-    echo "❌ Failed to install llama3.2-vision model"
+    echo "❌ Failed to install llava:7b model"
     exit 1
 fi
 
-if echo "$MODELS" | grep -q "mxbai-embed-large"; then
-    echo "✅ mxbai-embed-large model installed successfully"
+if echo "$MODELS" | grep -q "nomic-embed-text"; then
+    echo "✅ nomic-embed-text model installed successfully"
 else
-    echo "❌ Failed to install mxbai-embed-large model"
+    echo "❌ Failed to install nomic-embed-text model"
     exit 1
 fi
 
 # Test the models with sample requests
 echo "🧪 Testing vision model..."
-VISION_TEST=$(ollama run llama3.2-vision:latest "Describe what you see in this test." --verbose 2>/dev/null || echo "FAILED")
+VISION_TEST=$(ollama run llava:7b "Describe what you see in this test." --verbose 2>/dev/null || echo "FAILED")
 
 if [ "$VISION_TEST" != "FAILED" ]; then
     echo "✅ Vision model test passed"
@@ -79,7 +86,7 @@ else
 fi
 
 echo "🧪 Testing embedding model..."
-EMBED_TEST=$(ollama run mxbai-embed-large:latest "Generate embedding for: test vehicle damage" --verbose 2>/dev/null || echo "FAILED")
+EMBED_TEST=$(ollama run nomic-embed-text "Generate embedding for: test vehicle damage" --verbose 2>/dev/null || echo "FAILED")
 
 if [ "$EMBED_TEST" != "FAILED" ]; then
     echo "✅ Embedding model test passed"
@@ -92,8 +99,8 @@ echo "⚙️  Creating environment configuration..."
 cat > .env.ollama << EOF
 # Ollama Configuration for Vehicle Inspection System
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_VISION_MODEL=llama3.2-vision
-OLLAMA_EMBED_MODEL=mxbai-embed-large
+OLLAMA_VISION_MODEL=llava:7b
+OLLAMA_EMBED_MODEL=nomic-embed-text
 
 # Performance Settings
 OLLAMA_NUM_PARALLEL=4
@@ -113,7 +120,7 @@ echo ""
 echo "📊 System Information:"
 echo "   Ollama Version: $(ollama --version 2>/dev/null || echo 'Unknown')"
 echo "   Available Models:"
-ollama list | grep -E "(llama3.2-vision|mxbai-embed-large)" | sed 's/^/     /'
+ollama list | grep -E "(llava:7b|nomic-embed-text)" | sed 's/^/     /'
 
 echo ""
 echo "🎉 Ollama setup completed successfully!"

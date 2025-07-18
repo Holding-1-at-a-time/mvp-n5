@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Camera, Upload, Trash2, RotateCcw, QrCode, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useRouter } from "next/navigation"
 
 interface CapturedPhoto {
   id: string
@@ -17,6 +17,15 @@ interface CapturedPhoto {
 }
 
 export default function MediaUploadPage() {
+  const router = useRouter()
+
+  // Redirect immediately to /inspect/new
+  useEffect(() => {
+    router.replace("/inspect/new")
+  }, [router])
+
+  // The rest of the component is technically not rendered due to the redirect,
+  // but keeping it here for completeness based on the original file content.
   const [capturedPhotos, setCapturedPhotos] = useState<CapturedPhoto[]>([])
   const [vinScanned, setVinScanned] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)

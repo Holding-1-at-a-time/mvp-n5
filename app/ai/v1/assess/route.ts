@@ -1,80 +1,88 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { generateObject } from "ai"
+import { ollama } from "@ai-sdk/ollama"
+import { z } from "zod"
+import { env } from "@/lib/env"
+import { trackApiCall } from "@/lib/observability"
 
-export async function POST(request: NextRequest) {
+// Define the schema for the AI assessment response
+const assessmentSchema = z.object({
+  damage: z
+    .array(
+      z.object({
+        type: z.string().describe("Type of damage (e.g., 'dent', 'scratch', 'paint chip')"),
+        location: z
+          .string()
+          .describe("Specific location on the vehicle (e.g., 'front bumper', 'driver door', 'rear quarter panel')"),
+        severity: z.enum(["low", "medium", "high"]).describe("Severity of the damage"),
+        description: z.string().describe("Detailed description of the damage"),
+        estimatedRepairCost: z.number().describe("Estimated cost to repair this specific damage in USD"),
+      }),
+    )
+    .describe("Array of detected damages"),
+  overallCondition: z.enum(["excellent", "good", "fair", "poor"]).describe("Overall condition of the vehicle"),
+  recommendations: z.array(z.string()).describe("Recommended repair actions or next steps"),
+  totalEstimatedCost: z.number().describe("Total estimated cost for all detected repairs in USD"),
+})
+
+export async function POST(req: NextRequest) {
+  const startTime = Date.now()
+  let status = "success"
+  let errorMessage = ""
+
   try {
-    const { imageIds, imageUrls } = await request.json()
+    const { imageUrls, vinNumber } = await req.json()
 
-    // Simulate AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // Return fixture JSON data simulating AI assessment
-    const assessmentResult = {
-      damages: [
-        {
-          type: "dent",
-          severity: "moderate",
-          location: "front_bumper",
-          description: "Medium-sized dent on front bumper, approximately 4 inches in diameter",
-          confidence: 0.85,
-          imageId: imageIds[0],
-          boundingBox: { x: 100, y: 150, width: 80, height: 60 },
-        },
-        {
-          type: "scratch",
-          severity: "minor",
-          location: "driver_door",
-          description: "Surface scratch on driver side door, paint damage visible",
-          confidence: 0.92,
-          imageId: imageIds[1],
-          boundingBox: { x: 200, y: 300, width: 120, height: 20 },
-        },
-        {
-          type: "crack",
-          severity: "severe",
-          location: "windshield",
-          description: "Spider crack in windshield, requires full replacement",
-          confidence: 0.78,
-          imageId: imageIds[2] || imageIds[0],
-          boundingBox: { x: 300, y: 100, width: 150, height: 80 },
-        },
-      ],
-      estimates: [
-        {
-          description: "Front bumper dent repair and repaint",
-          laborHours: 3.5,
-          laborRate: 85,
-          partsCost: 150,
-          totalCost: 447.5,
-          category: "body_work",
-        },
-        {
-          description: "Door scratch touch-up and blend",
-          laborHours: 1.5,
-          laborRate: 85,
-          partsCost: 45,
-          totalCost: 172.5,
-          category: "paint_work",
-        },
-        {
-          description: "Windshield replacement with OEM glass",
-          laborHours: 2,
-          laborRate: 85,
-          partsCost: 350,
-          totalCost: 520,
-          category: "glass_work",
-        },
-      ],
-      metadata: {
-        processingTime: 2.3,
-        confidence: 0.85,
-        aiModel: "granite3.2-vision:latest",
-        timestamp: Date.now(),
-      },
+    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+      status = "bad_request"
+      errorMessage = "Missing imageUrls in request body."
+      return NextResponse.json({ error: errorMessage }, { status: 400 })
     }
 
-    return NextResponse.json(assessmentResult)
-  } catch (error) {
+    if (!vinNumber) {
+      status = "bad_request"
+      errorMessage = "Missing vinNumber in request body."
+      return NextResponse.json({ error: errorMessage }, { status: 400 })
+    }
+
+    const model = ollama(env.OLLAMA_BASE_URL).chat(env.OLLAMA_VISION_MODEL)
+
+    const prompt = `
+      You are an expert vehicle damage assessor. Analyze the provided images of a vehicle with VIN ${vinNumber}.
+      Identify all visible damages, their type, precise location, severity (low, medium, high), and provide a brief description.
+      Estimate the repair cost for each individual damage in USD.
+      Finally, provide an overall condition assessment and general repair recommendations.
+
+      Consider the following for severity and cost:
+      - Low: Minor cosmetic issues, easily fixable, e.g., light scratches, small chips.
+      - Medium: Noticeable damage requiring professional attention, e.g., small dents, deep scratches, minor paint damage.
+      - High: Significant damage affecting appearance or function, e.g., large dents, structural damage, extensive paint damage, broken parts.
+
+      Provide the output in a structured JSON format according to the schema.
+    `
+
+    const { object: assessment } = await generateObject({
+      model: model,
+      prompt: prompt,
+      schema: assessmentSchema,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            ...imageUrls.map((url: string) => ({ type: "image" as const, image: url })),
+          ],
+        },
+      ],
+    })
+
+    return NextResponse.json(assessment)
+  } catch (error: any) {
     console.error("AI assessment failed:", error)
-    return NextResponse.json({ error: "AI assessment failed" }, { status: 500 })
+    status = "error"
+    errorMessage = error.message || "Internal server error during AI assessment."
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
+  } finally {
+    trackApiCall("ai_assessment_v1", Date.now() - startTime, status, errorMessage)
   }
 }

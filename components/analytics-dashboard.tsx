@@ -1,358 +1,235 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-} from "recharts"
-import { TrendingUp, Car, MapPin, Calendar, DollarSign } from "lucide-react"
+import { BarChart, LineChart, PieChart } from "lucide-react"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { BarList, Line, XAxis, YAxis, CartesianGrid, Pie, Cell } from "recharts"
 
-// Mock analytics data based on VIN-decoded vehicle specs
-const mockAnalyticsData = {
-  vehiclesByMake: [
-    { make: "Toyota", count: 45, revenue: 6750 },
-    { make: "Honda", count: 38, revenue: 5700 },
-    { make: "Ford", count: 32, revenue: 5280 },
-    { make: "Chevrolet", count: 28, revenue: 4620 },
-    { make: "Nissan", count: 22, revenue: 3630 },
-  ],
-  vehiclesByBodyClass: [
-    { bodyClass: "Sedan", count: 65, avgPrice: 125 },
-    { bodyClass: "SUV", count: 48, avgPrice: 165 },
-    { bodyClass: "Truck", count: 35, avgPrice: 185 },
-    { bodyClass: "Coupe", count: 12, avgPrice: 145 },
-    { bodyClass: "Wagon", count: 8, avgPrice: 135 },
-  ],
-  fuelTypeDistribution: [
-    { fuelType: "Gasoline", count: 142, percentage: 84.5 },
-    { fuelType: "Hybrid", count: 18, percentage: 10.7 },
-    { fuelType: "Electric", count: 6, percentage: 3.6 },
-    { fuelType: "Diesel", count: 2, percentage: 1.2 },
-  ],
-  plantLocationAnalysis: [
-    { location: "USA", count: 128, avgAge: 8.2 },
-    { location: "Japan", count: 24, avgAge: 6.1 },
-    { location: "Germany", count: 12, avgAge: 7.8 },
-    { location: "South Korea", count: 8, avgAge: 5.9 },
-  ],
-  monthlyTrends: [
-    { month: "Jan", services: 45, revenue: 6750 },
-    { month: "Feb", services: 52, revenue: 7800 },
-    { month: "Mar", services: 68, revenue: 10200 },
-    { month: "Apr", services: 71, revenue: 10650 },
-    { month: "May", services: 83, revenue: 12450 },
-    { month: "Jun", services: 95, revenue: 14250 },
-  ],
-  ageDistribution: [
-    { ageRange: "0-2 years", count: 28, avgSpend: 145 },
-    { ageRange: "3-5 years", count: 42, avgSpend: 135 },
-    { ageRange: "6-10 years", count: 58, avgSpend: 125 },
-    { ageRange: "11-15 years", count: 35, avgSpend: 155 },
-    { ageRange: "15+ years", count: 18, avgSpend: 175 },
-  ],
-}
+// Mock Data
+const monthlyRevenueData = [
+  { month: "Jan", revenue: 3500 },
+  { month: "Feb", revenue: 4200 },
+  { month: "Mar", revenue: 3800 },
+  { month: "Apr", revenue: 4500 },
+  { month: "May", revenue: 5100 },
+  { month: "Jun", revenue: 4800 },
+]
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
+const jobStatusData = [
+  { name: "Completed", value: 120, fill: "var(--color-completed)" },
+  { name: "In Progress", value: 30, fill: "var(--color-in-progress)" },
+  { name: "Pending", value: 15, fill: "var(--color-pending)" },
+  { name: "Cancelled", value: 5, fill: "var(--color-cancelled)" },
+]
+
+const serviceCategoryData = [
+  { name: "Body Work", value: 45000 },
+  { name: "Paint Work", value: 30000 },
+  { name: "Dent Repair", value: 25000 },
+  { name: "Detailing", value: 15000 },
+  { name: "Other", value: 5000 },
+]
+
+const chartConfig = {
+  revenue: {
+    label: "Revenue",
+    color: "hsl(var(--primary))",
+  },
+  completed: {
+    label: "Completed",
+    color: "hsl(var(--chart-1))",
+  },
+  "in-progress": {
+    label: "In Progress",
+    color: "hsl(var(--chart-2))",
+  },
+  pending: {
+    label: "Pending",
+    color: "hsl(var(--chart-3))",
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "hsl(var(--chart-4))",
+  },
+  "body-work": {
+    label: "Body Work",
+    color: "hsl(var(--chart-1))",
+  },
+  "paint-work": {
+    label: "Paint Work",
+    color: "hsl(var(--chart-2))",
+  },
+  "dent-repair": {
+    label: "Dent Repair",
+    color: "hsl(var(--chart-3))",
+  },
+  detailing: {
+    label: "Detailing",
+    color: "hsl(var(--chart-4))",
+  },
+  other: {
+    label: "Other",
+    color: "hsl(var(--chart-5))",
+  },
+} as const
 
 export function AnalyticsDashboard() {
-  const [selectedTimeRange, setSelectedTimeRange] = useState("6months")
-
-  const totalServices = mockAnalyticsData.vehiclesByMake.reduce((sum, item) => sum + item.count, 0)
-  const totalRevenue = mockAnalyticsData.vehiclesByMake.reduce((sum, item) => sum + item.revenue, 0)
-  const avgTicket = totalRevenue / totalServices
+  const [activeTab, setActiveTab] = useState("overview")
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold">Vehicle Analytics Dashboard</h2>
-        <p className="text-muted-foreground">Insights based on VIN-decoded vehicle specifications</p>
-      </div>
+      <h2 className="text-2xl font-bold">Shop Analytics</h2>
+      <p className="text-muted-foreground">Gain insights into your shop's performance and operations.</p>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Car className="h-5 w-5 text-blue-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Total Services</div>
-                <div className="text-2xl font-bold">{totalServices}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-green-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Total Revenue</div>
-                <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-orange-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">Avg Ticket</div>
-                <div className="text-2xl font-bold">${avgTicket.toFixed(0)}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-purple-600" />
-              <div>
-                <div className="text-sm text-muted-foreground">This Month</div>
-                <div className="text-2xl font-bold">+18%</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Analytics Tabs */}
-      <Tabs defaultValue="vehicles" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="vehicles">Vehicle Analysis</TabsTrigger>
-          <TabsTrigger value="geography">Geographic</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="segments">Segments</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="jobs">Jobs</TabsTrigger>
         </TabsList>
 
-        {/* Vehicle Analysis */}
-        <TabsContent value="vehicles" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Services by Make */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Services by Vehicle Make</CardTitle>
-                <CardDescription>Based on VIN-decoded manufacturer data</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
+                  Monthly Revenue
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockAnalyticsData.vehiclesByMake}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="make" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#0088FE" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="h-[200px]">
+                  <LineChart
+                    accessibilityLayer
+                    data={monthlyRevenueData}
+                    margin={{
+                      left: 12,
+                      right: 12,
+                    }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => value.slice(0, 3)}
+                    />
+                    <YAxis dataKey="revenue" tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
               </CardContent>
             </Card>
 
-            {/* Body Class Distribution */}
             <Card>
               <CardHeader>
-                <CardTitle>Vehicle Body Class Distribution</CardTitle>
-                <CardDescription>Service volume by body class from VIN data</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Job Status Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex aspect-square items-center justify-center p-6">
+                <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                  <PieChart>
+                    <ChartTooltip cursor={false} content={<ChartTooltipContent nameKey="name" />} />
+                    <Pie
+                      data={jobStatusData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={60}
+                      outerRadius={80}
+                      strokeWidth={2}
+                      cornerRadius={5}
+                      paddingAngle={5}
+                    >
+                      {jobStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
+                  Revenue by Service Category
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {mockAnalyticsData.vehiclesByBodyClass.map((item, index) => (
-                    <div key={item.bodyClass} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.bodyClass}</span>
-                        <span>
-                          {item.count} services (${item.avgPrice} avg)
-                        </span>
-                      </div>
-                      <Progress value={(item.count / totalServices) * 100} className="h-2" />
-                    </div>
-                  ))}
-                </div>
+                <ChartContainer config={chartConfig} className="h-[200px]">
+                  <BarList data={serviceCategoryData} dataKey="name" valueKey="value" />
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>
-
-          {/* Fuel Type Analysis */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Fuel Type Distribution</CardTitle>
-              <CardDescription>Service breakdown by fuel type (VIN: FuelTypePrimary)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={mockAnalyticsData.fuelTypeDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ fuelType, percentage }) => `${fuelType} ${percentage}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {mockAnalyticsData.fuelTypeDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                <div className="space-y-4">
-                  {mockAnalyticsData.fuelTypeDistribution.map((item, index) => (
-                    <div key={item.fuelType} className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                      <div className="flex-1">
-                        <div className="font-medium">{item.fuelType}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {item.count} vehicles ({item.percentage}%)
-                        </div>
-                      </div>
-                      <Badge variant="outline">{item.count}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
-        {/* Geographic Analysis */}
-        <TabsContent value="geography" className="space-y-6">
+        <TabsContent value="revenue" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Manufacturing Plant Analysis
-              </CardTitle>
-              <CardDescription>
-                Service patterns by vehicle manufacturing location (VIN: PlantCity/PlantCountry)
-              </CardDescription>
+              <CardTitle>Detailed Revenue Trends</CardTitle>
+              {/* <CardDescription>Monthly revenue performance over time.</CardDescription> */}
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Services by Plant Location</h4>
-                  {mockAnalyticsData.plantLocationAnalysis.map((item) => (
-                    <div key={item.location} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.location}</span>
-                        <span>
-                          {item.count} vehicles (avg {item.avgAge}y old)
-                        </span>
-                      </div>
-                      <Progress value={(item.count / totalServices) * 100} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Regional Insights</h4>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-medium text-blue-900">USA Vehicles</div>
-                      <div className="text-sm text-blue-700">
-                        Highest volume, older average age suggests more maintenance needs
-                      </div>
-                    </div>
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <div className="font-medium text-green-900">Japanese Vehicles</div>
-                      <div className="text-sm text-green-700">
-                        Newer average age, premium service packages preferred
-                      </div>
-                    </div>
-                    <div className="p-3 bg-orange-50 rounded-lg">
-                      <div className="font-medium text-orange-900">European Vehicles</div>
-                      <div className="text-sm text-orange-700">Specialty services required, higher average ticket</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Trends Analysis */}
-        <TabsContent value="trends" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Service Trends</CardTitle>
-              <CardDescription>Service volume and revenue trends over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mockAnalyticsData.monthlyTrends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Bar yAxisId="left" dataKey="services" fill="#0088FE" />
-                  <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#00C49F" strokeWidth={2} />
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <LineChart
+                  accessibilityLayer
+                  data={monthlyRevenueData}
+                  margin={{
+                    left: 12,
+                    right: 12,
+                  }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => value.slice(0, 3)}
+                  />
+                  <YAxis dataKey="revenue" tickLine={false} axisLine={false} tickMargin={8} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                  <Line dataKey="revenue" type="monotone" stroke="var(--color-revenue)" strokeWidth={2} dot={true} />
                 </LineChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Segments Analysis */}
-        <TabsContent value="segments" className="space-y-6">
+        <TabsContent value="jobs" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Vehicle Age Segmentation</CardTitle>
-              <CardDescription>Service patterns by vehicle age (derived from VIN ModelYear)</CardDescription>
+              <CardTitle>Job Status Breakdown</CardTitle>
+              {/* <CardDescription>Current distribution of job statuses.</CardDescription> */}
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockAnalyticsData.ageDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="ageRange" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884D8" />
-                  </BarChart>
-                </ResponsiveContainer>
-
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Age-Based Insights</h4>
-                  {mockAnalyticsData.ageDistribution.map((item, index) => (
-                    <div key={item.ageRange} className="p-3 border rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium">{item.ageRange}</span>
-                        <Badge variant="outline">{item.count} vehicles</Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground">Average spend: ${item.avgSpend}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {item.ageRange.includes("15+")
-                          ? "Restoration services popular"
-                          : item.ageRange.includes("0-2")
-                            ? "Paint protection preferred"
-                            : "Standard detailing packages"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <CardContent className="flex aspect-square items-center justify-center p-6">
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <PieChart>
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent nameKey="name" />} />
+                  <Pie
+                    data={jobStatusData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={80}
+                    outerRadius={120}
+                    strokeWidth={2}
+                    cornerRadius={5}
+                    paddingAngle={5}
+                  >
+                    {jobStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>

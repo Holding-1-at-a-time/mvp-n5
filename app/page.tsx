@@ -106,6 +106,66 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </Link>
+
+          <Link href="/pricing">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5 text-orange-600" />
+                  Pricing
+                </CardTitle>
+                <CardDescription>Configure dynamic pricing rules</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Adjust labor rates, discounts, and market factors</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/knowledge">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileImage className="h-5 w-5 text-green-600" />
+                  Knowledge Base
+                </CardTitle>
+                <CardDescription>Manage RAG knowledge for AI assistance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Store and retrieve repair procedures and past assessments</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/api-docs">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  API Docs
+                </CardTitle>
+                <CardDescription>View API documentation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Access detailed documentation for system integration</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/monitoring">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  Monitoring
+                </CardTitle>
+                <CardDescription>Monitor system performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Track AI and backend service health and metrics</p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>
