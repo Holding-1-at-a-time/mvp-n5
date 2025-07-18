@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { RagDashboard } from "@/components/rag-dashboard"
 import { useUser } from "@clerk/nextjs"
 

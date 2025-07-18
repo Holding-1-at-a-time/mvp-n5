@@ -2,6 +2,7 @@
 
 import { type ReactNode, useMemo } from "react"
 import { ConvexProvider, ConvexReactClient } from "convex/react"
+import { ClerkProvider } from "@clerk/nextjs"
 
 /**
  * Wraps the React tree with Convex context.
@@ -11,9 +12,9 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const convex = useMemo(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!), [])
 
   return (
-    <ConvexProvider client={convex} useSuspense>
-      {children}
-    </ConvexProvider>
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+      <ConvexProvider client={convex}>{children}</ConvexProvider>
+    </ClerkProvider>
   )
 }
 
