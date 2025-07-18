@@ -8,25 +8,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Car,
-  Clock,
-  DollarSign,
-  TrendingUp,
-  AlertTriangle,
-  RefreshCw,
-  Activity,
-  Users,
-  CheckCircle,
-  XCircle,
-} from "lucide-react"
+import { Car, Clock, DollarSign, TrendingUp, AlertTriangle, RefreshCw, Activity, Users, CheckCircle, XCircle } from 'lucide-react'
 import { ErrorBoundary, APIErrorBoundary } from "@/components/error-boundary"
 import { useErrorHandler } from "@/lib/error-handling"
 import { toast } from "sonner"
 import { useState, useEffect } from "react"
 
 // Force dynamic rendering to prevent build-time errors
-export const dynamic = "force-dynamic"
+// export const dynamic = "force-dynamic"
 
 interface DashboardStats {
   totalInspections: number
