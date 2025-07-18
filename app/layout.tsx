@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/sonner"
 import { ConvexClientProvider } from "@/app/providers"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ErrorLogger } from "@/lib/error-handling"
-import { ClerkProvider } from "@clerk/nextjs"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -41,26 +40,24 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
-          <ErrorBoundary
-            onError={(error, errorInfo) => {
-              ErrorLogger.log(error, {
-                context: "root_error_boundary",
-                componentStack: errorInfo.componentStack,
-              })
-            }}
-          >
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-              <ConvexClientProvider>
-                <div className="min-h-screen bg-background">{children}</div>
-                <Toaster position="top-right" expand={true} richColors={true} closeButton={true} />
-              </ConvexClientProvider>
-            </ThemeProvider>
-          </ErrorBoundary>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ErrorBoundary
+          onError={(error, errorInfo) => {
+            ErrorLogger.log(error, {
+              context: "root_error_boundary",
+              componentStack: errorInfo.componentStack,
+            })
+          }}
+        >
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <ConvexClientProvider>
+              <div className="min-h-screen bg-background">{children}</div>
+              <Toaster position="top-right" expand={true} richColors={true} closeButton={true} />
+            </ConvexClientProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
+      </body>
+    </html>
   )
 }
