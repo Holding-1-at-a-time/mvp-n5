@@ -7,12 +7,15 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Download, Mail, Phone, MapPin, Calendar, Clock, CreditCard } from "lucide-react"
 import Link from "next/link"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
 
 interface InvoiceItem {
   description: string
   quantity: number
   unitPrice: number
   total: number
+  type: "service" | "material" // Added type for tax calculation
 }
 
 const invoiceItems: InvoiceItem[] = [
@@ -21,28 +24,44 @@ const invoiceItems: InvoiceItem[] = [
     quantity: 1,
     unitPrice: 150.0,
     total: 150.0,
+    type: "service",
   },
   {
     description: "Door Dent Removal (PDR)",
     quantity: 1,
     unitPrice: 280.0,
     total: 280.0,
+    type: "service",
   },
   {
     description: "Paint Touch-up & Blend",
     quantity: 1,
     unitPrice: 450.0,
     total: 450.0,
+    type: "material", // Example of a material item
   },
 ]
 
 export default function InvoicePage() {
   const [paymentProcessing, setPaymentProcessing] = useState(false)
+  const shopSettings = useQuery(api.pricing.getShopSettings)
 
-  const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0)
-  const taxRate = 0.08
-  const tax = subtotal * taxRate
-  const total = subtotal + tax
+  const serviceTaxRate = shopSettings?.serviceTaxRate ?? 0.08 // Default to 8% if not loaded
+  const materialTaxRate = shopSettings?.materialTaxRate ?? 0.08 // Default to 8% if not loaded
+
+  const subtotalServices = invoiceItems
+    .filter((item) => item.type === "service")
+    .reduce((sum, item) => sum + item.total, 0)
+  const subtotalMaterials = invoiceItems
+    .filter((item) => item.type === "material")
+    .reduce((sum, item) => sum + item.total, 0)
+
+  const taxServices = subtotalServices * serviceTaxRate
+  const taxMaterials = subtotalMaterials * materialTaxRate
+  const totalTax = taxServices + taxMaterials
+
+  const subtotal = subtotalServices + subtotalMaterials
+  const total = subtotal + totalTax
 
   const invoiceData = {
     number: "INV-12345",
@@ -202,8 +221,12 @@ export default function InvoicePage() {
                       <span>${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Tax (8%):</span>
-                      <span>${tax.toFixed(2)}</span>
+                      <span>Service Tax ({serviceTaxRate * 100}%):</span>
+                      <span>${taxServices.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Material Tax ({materialTaxRate * 100}%):</span>
+                      <span>${taxMaterials.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
