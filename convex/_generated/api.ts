@@ -27,7 +27,7 @@ import type * as users from "../users.js"
 import type * as vehicles from "../vehicles.js"
 import type * as workflows from "../workflows.js"
 import type * as workflows_v2 from "../workflows-v2.js"
-import type * as components from "../components.js"
+import type { hello as components } from "../components"
 
 /**
  * A utility for referencing Convex functions in your app's API.

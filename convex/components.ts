@@ -1,13 +1,10 @@
-import { query } from "convex/server"
-import { v } from "convex/values"
-
 /**
- * Minimal placeholder Convex module.
- * Replace or extend with useful queries/mutations as your app evolves.
+ * Minimal Convex module so `api.components.*` imports resolve.
+ * Replace with real queries/mutations later.
  */
-export const hello = query({
-  args: { name: v.optional(v.string()) },
-  handler: async (_ctx, { name }) => {
-    return `Hello from the components module${name ? `, ${name}` : ""}!`
-  },
+
+import { query } from "convex/server"
+
+export const hello = query(async () => {
+  return "hello from Convex components module"
 })
