@@ -16,6 +16,7 @@ interface EstimateItem {
   unitPrice: number
   total: number
   category: string
+  type: "service" | "material" // Add type property
 }
 
 const initialEstimate: EstimateItem[] = [
@@ -26,6 +27,7 @@ const initialEstimate: EstimateItem[] = [
     unitPrice: 150,
     total: 150,
     category: "Body Work",
+    type: "service", // Assign type
   },
   {
     id: "2",
@@ -34,6 +36,7 @@ const initialEstimate: EstimateItem[] = [
     unitPrice: 280,
     total: 280,
     category: "Dent Repair",
+    type: "service", // Assign type
   },
   {
     id: "3",
@@ -42,17 +45,24 @@ const initialEstimate: EstimateItem[] = [
     unitPrice: 450,
     total: 450,
     category: "Paint Work",
+    type: "service", // Assign type
   },
 ]
 
 const serviceOptions = [
-  { value: "scratch-repair", label: "Scratch Repair", price: 150, category: "Body Work" },
-  { value: "dent-removal", label: "Dent Removal (PDR)", price: 280, category: "Dent Repair" },
-  { value: "paint-touchup", label: "Paint Touch-up", price: 200, category: "Paint Work" },
-  { value: "bumper-repair", label: "Bumper Repair", price: 350, category: "Body Work" },
-  { value: "panel-replacement", label: "Panel Replacement", price: 800, category: "Body Work" },
-  { value: "headlight-restoration", label: "Headlight Restoration", price: 120, category: "Detailing" },
-  { value: "interior-cleaning", label: "Interior Deep Clean", price: 180, category: "Detailing" },
+  { value: "scratch-repair", label: "Scratch Repair", price: 150, category: "Body Work", type: "service" },
+  { value: "dent-removal", label: "Dent Removal (PDR)", price: 280, category: "Dent Repair", type: "service" },
+  { value: "paint-touchup", label: "Paint Touch-up", price: 200, category: "Paint Work", type: "service" },
+  { value: "bumper-repair", label: "Bumper Repair", price: 350, category: "Body Work", type: "service" },
+  { value: "panel-replacement", label: "Panel Replacement", price: 800, category: "Body Work", type: "material" }, // Example material
+  {
+    value: "headlight-restoration",
+    label: "Headlight Restoration",
+    price: 120,
+    category: "Detailing",
+    type: "service",
+  },
+  { value: "interior-cleaning", label: "Interior Deep Clean", price: 180, category: "Detailing", type: "service" },
 ]
 
 export default function EstimatePage() {
@@ -61,10 +71,23 @@ export default function EstimatePage() {
   const [selectedService, setSelectedService] = useState("")
   const [editingItem, setEditingItem] = useState<string | null>(null)
 
-  const taxRate = 0.08
-  const subtotal = estimateItems.reduce((sum, item) => sum + item.total, 0)
-  const tax = subtotal * taxRate
-  const grandTotal = subtotal + tax
+  // Define separate tax rates
+  const serviceTaxRate = 0.08 // 8% for services
+  const materialTaxRate = 0.05 // 5% for materials
+
+  // Calculate subtotals for each type
+  const serviceSubtotal = estimateItems
+    .filter((item) => item.type === "service")
+    .reduce((sum, item) => sum + item.total, 0)
+  const materialSubtotal = estimateItems
+    .filter((item) => item.type === "material")
+    .reduce((sum, item) => sum + item.total, 0)
+
+  const totalSubtotal = serviceSubtotal + materialSubtotal
+  const serviceTax = serviceSubtotal * serviceTaxRate
+  const materialTax = materialSubtotal * materialTaxRate
+  const totalTax = serviceTax + materialTax
+  const grandTotal = totalSubtotal + totalTax
 
   const filteredServices = serviceOptions.filter((service) =>
     service.label.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -80,6 +103,7 @@ export default function EstimatePage() {
         unitPrice: service.price,
         total: service.price,
         category: service.category,
+        type: service.type, // Assign the type from serviceOptions
       }
       setEstimateItems([...estimateItems, newItem])
       setSelectedService("")
@@ -91,7 +115,7 @@ export default function EstimatePage() {
     setEstimateItems((items) =>
       items.map((item) => {
         if (item.id === id) {
-          const updatedItem = { ...item, [field]: value }
+          const updatedItem = { ...item, [field]: value } as EstimateItem // Cast to EstimateItem
           if (field === "quantity" || field === "unitPrice") {
             updatedItem.total = updatedItem.quantity * updatedItem.unitPrice
           }
@@ -296,12 +320,20 @@ export default function EstimatePage() {
           <div className="flex items-center gap-8">
             <div className="text-sm">
               <span className="text-gray-600">Subtotal: </span>
-              <span className="font-semibold">${subtotal.toFixed(2)}</span>
+              <span className="font-semibold">${totalSubtotal.toFixed(2)}</span>
             </div>
-            <div className="text-sm">
-              <span className="text-gray-600">Tax (8%): </span>
-              <span className="font-semibold">${tax.toFixed(2)}</span>
-            </div>
+            {serviceTax > 0 && (
+              <div className="text-sm">
+                <span className="text-gray-600">Service Tax ({serviceTaxRate * 100}%): </span>
+                <span className="font-semibold">${serviceTax.toFixed(2)}</span>
+              </div>
+            )}
+            {materialTax > 0 && (
+              <div className="text-sm">
+                <span className="text-gray-600">Material Tax ({materialTaxRate * 100}%): </span>
+                <span className="font-semibold">${materialTax.toFixed(2)}</span>
+              </div>
+            )}
             <div className="text-lg">
               <span className="text-gray-600">Total: </span>
               <span className="font-bold text-blue-600">${grandTotal.toFixed(2)}</span>
