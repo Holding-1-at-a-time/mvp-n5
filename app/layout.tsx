@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { ConvexClientProvider } from "@/app/providers"
 import { ErrorBoundary } from "@/components/error-boundary"
-import { ErrorLogger } from "@/lib/error-handling"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -16,40 +15,11 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
-// Global error handler for client-side errors
-if (typeof window !== "undefined") {
-  window.addEventListener("error", (event) => {
-    ErrorLogger.log(event.error, {
-      context: "global_error_handler",
-      filename: event.filename,
-      lineno: event.lineno,
-      colno: event.colno,
-    })
-  })
-
-  window.addEventListener("unhandledrejection", (event) => {
-    ErrorLogger.log(new Error(event.reason), {
-      context: "unhandled_promise_rejection",
-    })
-  })
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ErrorBoundary
-          onError={(error, errorInfo) => {
-            ErrorLogger.log(error, {
-              context: "root_error_boundary",
-              componentStack: errorInfo.componentStack,
-            })
-          }}
-        >
+        <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <ConvexClientProvider>
               <div className="min-h-screen bg-background">{children}</div>
