@@ -1,74 +1,38 @@
 "use client"
 
 import { useState } from "react"
+import { useUser } from "@clerk/nextjs"
+import { useConvexAuth } from "convex/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { DollarSign, Clock, TrendingUp, Camera, CheckCircle, AlertCircle, Plus } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DollarSign, Clock, Camera, CheckCircle, AlertCircle, Plus, Users, Loader2 } from "lucide-react"
+import {
+  useRealTimeDashboardStats,
+  useRealTimeRecentActivity,
+  useRealTimeSystemHealth,
+} from "@/hooks/use-real-time-dashboard"
+import type { Id } from "@/convex/_generated/dataModel"
+import { RealTimeNotifications } from "@/components/real-time-notifications"
 
 export const dynamic = "force-dynamic"
 
-interface Job {
-  id: string
-  date: string
-  time: string
-  customer: string
-  status: "pending" | "confirmed" | "in-progress" | "completed"
-  services: string[]
-  total: number
-  avatar?: string
-}
-
-const upcomingJobs: Job[] = [
-  {
-    id: "1",
-    date: "Jan 7",
-    time: "1:00 PM",
-    customer: "John Doe",
-    status: "confirmed",
-    services: ["Scratch Repair", "Dent Removal"],
-    total: 886.4,
-  },
-  {
-    id: "2",
-    date: "Jan 7",
-    time: "9:00 AM",
-    customer: "Jane Smith",
-    status: "pending",
-    services: ["Paint Touch-up", "Interior Clean"],
-    total: 450.0,
-  },
-  {
-    id: "3",
-    date: "Jan 8",
-    time: "11:00 AM",
-    customer: "Mike Johnson",
-    status: "confirmed",
-    services: ["Bumper Repair"],
-    total: 320.0,
-  },
-  {
-    id: "4",
-    date: "Jan 8",
-    time: "2:00 PM",
-    customer: "Sarah Wilson",
-    status: "in-progress",
-    services: ["Full Detail", "Headlight Restoration"],
-    total: 280.0,
-  },
-]
-
-const stats = {
-  pendingInspections: 5,
-  monthlyRevenue: 4200,
-  avgTurnaround: 2.5,
-  completedJobs: 23,
-}
-
 export default function DashboardPage() {
+  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth()
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState("inspections")
+
+  // Mock shop ID - in a real app, you'd get this from user context or URL params
+  const shopId = "shopId123" as Id<"shops">
+
+  // Use real-time data hooks
+  const stats = useRealTimeDashboardStats(shopId)
+  const recentActivity = useRealTimeRecentActivity(shopId, 5)
+  const systemHealth = useRealTimeSystemHealth(shopId)
+
+  const isLoading = isAuthLoading || !stats || !recentActivity
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -100,6 +64,17 @@ export default function DashboardPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <p className="text-gray-500">Loading dashboard data...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -109,10 +84,13 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold">Shop Dashboard</h1>
             <p className="text-gray-600">Slick Solutions Auto Care</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Inspection
-          </Button>
+          <div className="flex items-center gap-4">
+            <RealTimeNotifications shopId={shopId} />
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Inspection
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -124,7 +102,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending Inspections</p>
-                  <p className="text-3xl font-bold">{stats.pendingInspections}</p>
+                  <p className="text-3xl font-bold">{stats?.pendingInspections || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <Camera className="h-6 w-6 text-yellow-600" />
@@ -138,7 +116,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Revenue This Month</p>
-                  <p className="text-3xl font-bold">${stats.monthlyRevenue.toLocaleString()}</p>
+                  <p className="text-3xl font-bold">${stats?.totalRevenue?.toLocaleString() || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="h-6 w-6 text-green-600" />
@@ -151,8 +129,8 @@ export default function DashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Avg. Turnaround</p>
-                  <p className="text-3xl font-bold">{stats.avgTurnaround}h</p>
+                  <p className="text-sm font-medium text-gray-600">Completed Jobs</p>
+                  <p className="text-3xl font-bold">{stats?.completedThisMonth || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Clock className="h-6 w-6 text-blue-600" />
@@ -165,11 +143,11 @@ export default function DashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Completed Jobs</p>
-                  <p className="text-3xl font-bold">{stats.completedJobs}</p>
+                  <p className="text-sm font-medium text-gray-600">Active Customers</p>
+                  <p className="text-3xl font-bold">{stats?.activeCustomers || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                  <Users className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
             </CardContent>
@@ -192,36 +170,51 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {upcomingJobs.slice(0, 3).map((job) => (
-                    <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <Avatar>
-                          <AvatarFallback>
-                            {job.customer
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{job.customer}</div>
-                          <div className="text-sm text-gray-600">{job.services.join(", ")}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="font-semibold">${job.total}</div>
-                          <div className="text-sm text-gray-600">
-                            {job.date} • {job.time}
+                  {recentActivity && recentActivity.length > 0 ? (
+                    recentActivity.map((inspection) => (
+                      <div key={inspection._id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <Avatar>
+                            {inspection.customer?.avatar ? (
+                              <AvatarImage
+                                src={inspection.customer.avatar || "/placeholder.svg"}
+                                alt={inspection.customer.name}
+                              />
+                            ) : (
+                              <AvatarFallback>
+                                {inspection.customer?.name
+                                  ? inspection.customer.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                  : "NA"}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{inspection.customer?.name || "No Customer"}</div>
+                            <div className="text-sm text-gray-600">
+                              {inspection.vehicle?.make} {inspection.vehicle?.model}
+                            </div>
                           </div>
                         </div>
-                        <Badge className={getStatusColor(job.status)}>
-                          {getStatusIcon(job.status)}
-                          <span className="ml-1 capitalize">{job.status}</span>
-                        </Badge>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="font-semibold">${inspection.estimatedCost || 0}</div>
+                            <div className="text-sm text-gray-600">
+                              {new Date(inspection.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <Badge className={getStatusColor(inspection.status)}>
+                            {getStatusIcon(inspection.status)}
+                            <span className="ml-1 capitalize">{inspection.status}</span>
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">No recent inspections found</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -233,35 +226,8 @@ export default function DashboardPage() {
                 <CardTitle>Upcoming Jobs</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {upcomingJobs.map((job) => (
-                    <div
-                      key={job.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="font-bold text-lg">{job.date.split(" ")[1]}</div>
-                          <div className="text-sm text-gray-600">{job.date.split(" ")[0]}</div>
-                        </div>
-                        <div className="w-px h-12 bg-gray-200"></div>
-                        <div>
-                          <div className="font-medium">{job.time}</div>
-                          <div className="text-sm text-gray-600">{job.customer}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600">{job.services.join(", ")}</div>
-                          <div className="font-semibold">${job.total}</div>
-                        </div>
-                        <Badge className={getStatusColor(job.status)}>
-                          <span className="capitalize">{job.status}</span>
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {/* Schedule content would go here */}
+                <div className="text-center py-8 text-gray-500">Schedule data will be implemented soon</div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -272,38 +238,8 @@ export default function DashboardPage() {
                 <CardTitle>Payment Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {upcomingJobs
-                    .filter((job) => job.status === "completed" || job.status === "confirmed")
-                    .map((job) => (
-                      <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <Avatar>
-                            <AvatarFallback>
-                              {job.customer
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{job.customer}</div>
-                            <div className="text-sm text-gray-600">Invoice #{job.id.padStart(5, "0")}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="font-semibold">${job.total}</div>
-                            <div className="text-sm text-gray-600">{job.date}</div>
-                          </div>
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Paid
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                </div>
+                {/* Payments content would go here */}
+                <div className="text-center py-8 text-gray-500">Payment data will be implemented soon</div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -312,27 +248,41 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Monthly Performance</CardTitle>
+                  <CardTitle>System Health</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Jobs Completed</span>
-                      <span className="font-semibold">{stats.completedJobs}</span>
+                  {systemHealth ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">AI Processing</span>
+                        <Badge
+                          className={
+                            systemHealth.aiProcessing.status === "healthy"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }
+                        >
+                          {systemHealth.aiProcessing.status}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">File Storage</span>
+                        <Badge className="bg-green-100 text-green-800">{systemHealth.fileStorage.status}</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Database</span>
+                        <Badge className="bg-green-100 text-green-800">{systemHealth.database.status}</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Recent AI Jobs</span>
+                        <span className="font-semibold">{systemHealth.aiProcessing.totalJobs}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Revenue</span>
-                      <span className="font-semibold">${stats.monthlyRevenue.toLocaleString()}</span>
+                  ) : (
+                    <div className="flex items-center justify-center h-32">
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Avg. Job Value</span>
-                      <span className="font-semibold">${Math.round(stats.monthlyRevenue / stats.completedJobs)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Customer Satisfaction</span>
-                      <span className="font-semibold">4.8/5.0</span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
