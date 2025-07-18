@@ -1,11 +1,10 @@
-import "./globals.css"
-import type { Metadata } from "next"
+import "@/app/globals.css"
 import type { ReactNode } from "react"
-import { ConvexClientProvider } from "./providers"
+import ConvexClientProvider from "@/app/providers"
 
-export const metadata: Metadata = {
-  title: "Slick Solutions – Vehicle Inspection",
-  description: "AI-powered platform for vehicle damage assessment and estimating.",
+export const metadata = {
+  title: "Slick Solutions",
+  description: "Multi-tenant vehicle-inspection platform",
     generator: 'v0.dev'
 }
 

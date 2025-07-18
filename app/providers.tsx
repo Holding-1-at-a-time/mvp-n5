@@ -1,33 +1,24 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { type ReactNode, useMemo } from "react"
 import { ConvexProvider, ConvexReactClient } from "convex/react"
-import { ClerkProvider } from "@clerk/nextjs"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
 
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-if (!convexUrl) {
-  // Helpful early error if the env var isn’t configured
-  throw new Error("Missing NEXT_PUBLIC_CONVEX_URL")
-}
-const convex = new ConvexReactClient(convexUrl)
-
+/**
+ * Wraps the React tree with Convex context.
+ * Reads the URL from NEXT_PUBLIC_CONVEX_URL.
+ */
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  const convex = useMemo(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!), [])
+
   return (
-    <ClerkProvider>
-      <ConvexProvider client={convex}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-          <Toaster />
-        </ThemeProvider>
-      </ConvexProvider>
-    </ClerkProvider>
+    <ConvexProvider client={convex} useSuspense>
+      {children}
+    </ConvexProvider>
   )
 }
 
-/**
- * Legacy re-export for code that still imports `{ Providers }`.
- * Prefer `ConvexClientProvider` going forward.
- */
+/* -------------------------------------------------------------------------- */
+/* Legacy alias so older imports (`Providers`) keep working.                  */
+/* -------------------------------------------------------------------------- */
 export { ConvexClientProvider as Providers }
+export default ConvexClientProvider
