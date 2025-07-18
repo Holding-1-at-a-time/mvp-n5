@@ -1,27 +1,22 @@
 "use client"
 
-import type React from "react"
-
+import { useMemo, type ReactNode } from "react"
 import { ConvexProvider, ConvexReactClient } from "convex/react"
 import { ClerkProvider } from "@clerk/nextjs"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+/**
+ * Global provider tree: Clerk ▶ Convex ▶ Theme.
+ * Must wrap every client page to ensure hooks like `useUser()` work.
+ */
+export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  const convex = useMemo(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!), [])
 
-export function ConvexClientProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
-      appearance={{
-        baseTheme: undefined,
-        variables: {
-          colorPrimary: "#00ae98",
-        },
-      }}
-    >
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
       <ConvexProvider client={convex}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
           <Toaster />
         </ThemeProvider>
@@ -30,5 +25,8 @@ export function ConvexClientProvider({ children }: { children: React.ReactNode }
   )
 }
 
-// Legacy export for backward compatibility
-export const Providers = ConvexClientProvider
+/* -------------------------------------------------------------------------- */
+/* Exports                                                                     */
+/* -------------------------------------------------------------------------- */
+export { ConvexClientProvider as Providers } // legacy alias
+export default ConvexClientProvider // ***required default export***
