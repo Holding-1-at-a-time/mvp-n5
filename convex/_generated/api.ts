@@ -89,3 +89,11 @@ export type FullApi = GeneratedAPI<ApiFromModules>
  * type-safety.
  */
 export declare const api: FullApi
+
+/**
+ * ---- v0 addition ------------------------------------------------------
+ * Some legacy code expects a `components` named export from this module.
+ * It is **not** part of the normal Convex code-gen output, so we expose a
+ * benign placeholder to satisfy the import without affecting runtime.
+ */
+export const components = {} as const

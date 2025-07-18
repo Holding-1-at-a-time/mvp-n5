@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import {
   checkEmbeddingLatency,
   checkWorkflowFailureRate,
@@ -9,19 +10,18 @@ import {
   checkVisionModelAccuracy,
 } from "./alerts"
 
-import * as Sentry from "@sentry/node"
-
+/**
+ * Generic metric tracker: records a metric to Sentry **and** runs
+ * threshold-based checks that can trigger Slack alerts.
+ */
 export async function trackMetric(name: string, value: number, tags?: Record<string, any>) {
   try {
     Sentry.captureMessage(name, {
       level: "info",
-      extra: {
-        value,
-        ...tags,
-      },
+      extra: { value, ...tags },
     })
 
-    // Check for alert thresholds
+    /* ---------------- Threshold-based alert fan-out ----------------- */
     if (name === "embedding.latency") {
       await checkEmbeddingLatency(value, tags)
     } else if (name === "api.response_time") {
@@ -36,59 +36,56 @@ export async function trackMetric(name: string, value: number, tags?: Record<str
       await checkVisionModelAccuracy(tags.confidence, tags)
     }
 
-    // Store metrics for failure rate calculations
     await storeMetricForFailureRate(name, value, tags)
-  } catch (error) {
-    console.error("Failed to track metric:", error)
+  } catch (err) {
+    console.error("Failed to track metric", err)
   }
 }
 
-// Store recent metrics for failure rate calculation
-const recentMetrics = new Map<string, Array<{ timestamp: number; success: boolean }>>()
+/**
+ * Convenience wrapper for HTTP/API instrumentation – keeps external imports
+ * stable that expected a `trackApiCall()` helper.
+ */
+export async function trackApiCall(route: string, durationMs: number, method = "GET") {
+  await trackMetric("api.response_time", durationMs, { route, method })
+}
 
-async function storeMetricForFailureRate(name: string, value: number, tags?: Record<string, any>) {
-  const isFailureMetric = name.includes("error") || name.includes("failure") || tags?.error === true
-  const isSuccessMetric = name.includes("success") || name.includes("complete") || tags?.success === true
+/* ---------------- Failure-rate rolling window -------------------- */
 
-  if (!isFailureMetric && !isSuccessMetric) return
+const recent: Record<string, Array<{ ts: number; success: boolean }>> = {}
 
-  const key = name.split(".")[0] // e.g., 'workflow' from 'workflow.failure'
+async function storeMetricForFailureRate(name: string, _value: number, tags?: Record<string, any>) {
+  const success = tags?.success === true || name.includes("success")
+  const failure = tags?.error === true || name.includes("error")
+
+  if (!success && !failure) return
+
+  const key = name.split(".")[0] // eg "workflow"
   const now = Date.now()
-  const fiveMinutesAgo = now - 5 * 60 * 1000
+  const fiveMinAgo = now - 5 * 60 * 1_000
 
-  if (!recentMetrics.has(key)) {
-    recentMetrics.set(key, [])
-  }
+  recent[key] ||= []
+  recent[key].push({ ts: now, success })
 
-  const metrics = recentMetrics.get(key)!
+  // prune old
+  recent[key] = recent[key].filter((m) => m.ts > fiveMinAgo)
 
-  // Add new metric
-  metrics.push({
-    timestamp: now,
-    success: isSuccessMetric,
-  })
+  if (recent[key].length < 10) return
 
-  // Remove old metrics (older than 5 minutes)
-  const filtered = metrics.filter((m) => m.timestamp > fiveMinutesAgo)
-  recentMetrics.set(key, filtered)
+  const failures = recent[key].filter((m) => !m.success).length
+  const rate = failures / recent[key].length
 
-  // Calculate failure rate if we have enough data
-  if (filtered.length >= 10) {
-    const failures = filtered.filter((m) => !m.success).length
-    const failureRate = failures / filtered.length
-
-    if (key === "workflow") {
-      await checkWorkflowFailureRate(failureRate, {
-        totalRequests: filtered.length,
-        failures,
-        timeWindow: "5min",
-      })
-    } else if (key === "upload") {
-      await checkUploadFailureRate(failureRate, {
-        totalRequests: filtered.length,
-        failures,
-        timeWindow: "5min",
-      })
-    }
+  if (key === "workflow") {
+    await checkWorkflowFailureRate(rate, {
+      totalRequests: recent[key].length,
+      failures,
+      timeWindow: "5 min",
+    })
+  } else if (key === "upload") {
+    await checkUploadFailureRate(rate, {
+      totalRequests: recent[key].length,
+      failures,
+      timeWindow: "5 min",
+    })
   }
 }
