@@ -13,7 +13,11 @@ import { useEffect, useState } from "react"
 // Create Convex client
 const convex = new ConvexReactClient(env.NEXT_PUBLIC_CONVEX_URL)
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function ConvexClientProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const [isValidated, setIsValidated] = useState(false)
 
   useEffect(() => {
@@ -55,3 +59,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </ClerkProvider>
   )
 }
+
+// Back-compat: some modules still import { Providers }
+export { ConvexClientProvider as Providers }
