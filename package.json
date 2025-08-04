@@ -60,7 +60,7 @@
     "embla-carousel-react": "latest",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
-    "next": "15.2.4",
+    "next": "15.4.5",
     "next-themes": "latest",
     "node-fetch": "latest",
     "react": "^19",
